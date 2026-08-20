@@ -11,6 +11,8 @@ Build payment apps with the [Pollar SDK](https://docs.pollar.xyz). Each app in t
 
 More about how GrantFox works: [docs.grantfox.xyz](https://docs.grantfox.xyz/)
 
+Questions, help, or just to hang out while you build: [community Telegram](https://t.me/+pWpCS-vLkQI2OWIx)
+
 ## 2. Build it
 
 Once assigned, fork this repo and clone your fork:
