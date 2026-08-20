@@ -1,0 +1,88 @@
+{
+  "apps": [
+    {
+      "slug": "pasanaku-circles",
+      "category": "savings",
+      "issue": null,
+      "deploy": null,
+      "author": null
+    },
+    {
+      "slug": "bill-split",
+      "category": "savings",
+      "issue": null,
+      "deploy": null,
+      "author": null
+    },
+    {
+      "slug": "money-pool",
+      "category": "savings",
+      "issue": null,
+      "deploy": null,
+      "author": null
+    },
+    {
+      "slug": "vendor-pay-link",
+      "category": "commerce",
+      "issue": null,
+      "deploy": null,
+      "author": null
+    },
+    {
+      "slug": "qr-menu-orders",
+      "category": "commerce",
+      "issue": null,
+      "deploy": null,
+      "author": null
+    },
+    {
+      "slug": "raffle-hub",
+      "category": "commerce",
+      "issue": null,
+      "deploy": null,
+      "author": null
+    },
+    {
+      "slug": "event-tickets",
+      "category": "community",
+      "issue": null,
+      "deploy": null,
+      "author": null
+    },
+    {
+      "slug": "match-predictions",
+      "category": "community",
+      "issue": null,
+      "deploy": null,
+      "author": null
+    },
+    {
+      "slug": "market-orders",
+      "category": "community",
+      "issue": null,
+      "deploy": null,
+      "author": null
+    },
+    {
+      "slug": "alcancia-goals",
+      "category": "savings",
+      "issue": null,
+      "deploy": null,
+      "author": null
+    },
+    {
+      "slug": "fiado-ledger",
+      "category": "commerce",
+      "issue": null,
+      "deploy": null,
+      "author": null
+    },
+    {
+      "slug": "chamba-receipts",
+      "category": "community",
+      "issue": null,
+      "deploy": null,
+      "author": null
+    }
+  ]
+}
