@@ -12,12 +12,12 @@
       "category": "savings",
       "issue": null,
       "deploy": null,
-      "author": "aleregex"
+      "author": null
     },
     {
       "slug": "money-pool",
       "category": "savings",
-      "issue": "https://github.com/pollar-xyz/pollar-apps/issues/5",
+      "issue": null,
       "deploy": null,
       "author": null
     },
