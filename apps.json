@@ -3,7 +3,7 @@
     {
       "slug": "pasanaku-circles",
       "category": "savings",
-      "issue": null,
+      "issue": "https://github.com/pollar-xyz/pollar-apps/issues/4",
       "deploy": null,
       "author": null
     },
