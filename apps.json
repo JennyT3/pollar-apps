@@ -17,7 +17,7 @@
     {
       "slug": "money-pool",
       "category": "savings",
-      "issue": null,
+      "issue": "https://github.com/pollar-xyz/pollar-apps/issues/5",
       "deploy": null,
       "author": null
     },
