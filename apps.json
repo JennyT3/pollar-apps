@@ -32,7 +32,7 @@
       "slug": "qr-menu-orders",
       "category": "commerce",
       "issue": "https://github.com/pollar-xyz/pollar-apps/issues/10",
-      "deploy": null,
+      "deploy": "https://qr-menu-orders-three.vercel.app",
       "author": "ItzRodri"
     },
     {
