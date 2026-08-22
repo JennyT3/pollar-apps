@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import type { OrderStatus } from "@/db/schema";
 import type { OrderWithLines } from "@/lib/queries";
+import { Money, formatMoney } from "@/components/Money";
 import { explorerTxUrl } from "@/lib/stellar";
 import { formatTime } from "@/lib/time";
 
@@ -119,7 +120,11 @@ function OrderCard({
     <Card>
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <p className="text-lg font-bold">{order.tableLabel}</p>
+          {/* The number is what gets shouted across a kitchen, so it leads. */}
+          <p className="text-lg font-bold">
+            Pedido #{order.number}{" "}
+            <span className="font-normal text-muted">· {order.tableLabel}</span>
+          </p>
           <p className="text-sm text-muted">
             {order.paidAt ? formatTime(order.paidAt) : "—"}
           </p>
@@ -132,9 +137,7 @@ function OrderCard({
           >
             {STATUS_LABEL[order.status] ?? order.status}
           </span>
-          <span className="font-mono text-xl font-semibold tabular-nums">
-            {order.total}
-          </span>
+          <Money amount={order.total} className="text-xl font-semibold" />
         </div>
       </div>
 
@@ -145,7 +148,7 @@ function OrderCard({
               <span className="font-mono font-semibold">{line.quantity}×</span>{" "}
               {line.name}
             </span>
-            <span className="font-mono text-muted">{line.price}</span>
+            <span className="font-mono text-muted">{formatMoney(line.price)}</span>
           </li>
         ))}
       </ul>
@@ -156,9 +159,9 @@ function OrderCard({
             href={explorerTxUrl(order.txHash)}
             target="_blank"
             rel="noreferrer"
-            className="font-mono text-xs text-muted underline transition-colors hover:text-primary"
+            className="text-xs text-muted underline transition-colors hover:text-primary"
           >
-            {order.txHash.slice(0, 10)}…
+            Ver comprobante ↗
           </a>
         ) : (
           <span />

@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { usePollarAuth } from "@/hooks/usePollarAuth";
-import { middleTruncate } from "@/lib/format";
+
 
 type Mode = "create" | "restore";
 
@@ -36,7 +36,11 @@ export function ClaimRestaurant() {
       const res = await fetch("/api/restaurants", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, ownerAddress: user.address }),
+        body: JSON.stringify({
+          name,
+          ownerAddress: user.address,
+          ownerEmail: user.profile?.mail ?? null,
+        }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "No se pudo crear el local.");
@@ -71,11 +75,13 @@ export function ClaimRestaurant() {
   if (issued) {
     return (
       <Card>
-        <h2 className="text-lg font-bold">Guardá tu clave de admin</h2>
+        <h2 className="text-lg font-bold">Guardá la llave de tu local</h2>
         <p className="mt-2 text-sm text-muted">
-          Es la única vez que se muestra. Con ella volvés a entrar a tu menú
-          desde otro celular o después de limpiar el navegador. Nosotros solo
-          guardamos una huella suya, así que no se puede recuperar ni reenviar.
+          Es la única vez que se muestra, así que guardala ahora — en tus notas,
+          en un mensaje a vos mismo, donde sea. Con ella entrás a administrar tu
+          local desde otro celular o si cambiás de navegador. Si la perdés no te
+          la podemos reenviar: no guardamos una copia, solo una huella para
+          reconocerla.
         </p>
         <p className="mt-4 break-all rounded-xl border border-border bg-surface p-3 font-mono text-sm">
           {issued}
@@ -88,7 +94,7 @@ export function ClaimRestaurant() {
               setCopied(true);
             }}
           >
-            {copied ? "Copiada ✓" : "Copiar clave"}
+            {copied ? "Copiada ✓" : "Copiar la llave"}
           </Button>
           <Button onClick={() => router.refresh()}>Ya la guardé, seguir</Button>
         </div>
@@ -112,7 +118,9 @@ export function ClaimRestaurant() {
                 : "text-muted hover:text-foreground"
             }`}
           >
-            {m === "create" ? "Nuevo local" : "Tengo una clave"}
+            {/* Not "tengo un local": everyone reading this has one, that's the
+                whole point. What separates the two groups is the key. */}
+            {m === "create" ? "Nuevo local" : "Entrar con mi llave"}
           </button>
         ))}
       </div>
@@ -121,18 +129,19 @@ export function ClaimRestaurant() {
         {mode === "create" ? (
           <div className="flex flex-col gap-4">
             <div>
-              <h2 className="text-lg font-bold">Configurá tu local</h2>
-              <p className="mt-1 text-sm text-muted">
-                Los comensales pagan directo a tu cuenta Pollar. Entrá con la
-                cuenta que tiene que recibir la plata.
+              <h2 className="text-lg font-bold">Abrí tu local</h2>
+              <p className="mt-1 text-sm leading-6 text-muted">
+                Tus clientes van a pagar directo a tu cuenta, sin intermediarios
+                y sin esperar liquidación. Entrá con la cuenta donde querés
+                recibir la plata.
               </p>
             </div>
 
             {user ? (
-              <p className="flex items-center justify-between gap-3 rounded-xl border border-border bg-surface px-3 py-2 text-sm">
-                <span className="text-muted">Los pagos van a</span>
-                <span className="font-mono" title={user.address}>
-                  {middleTruncate(user.address, 6, 6)}
+              <p className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-success-border bg-success-light px-3 py-2.5 text-sm">
+                <span className="text-success">✓ Vas a cobrar en</span>
+                <span className="font-medium text-success">
+                  {user.profile?.mail ?? "tu cuenta"}
                 </span>
               </p>
             ) : (
@@ -151,19 +160,20 @@ export function ClaimRestaurant() {
               loading={busy}
               className="w-full py-3"
             >
-              {user ? "Crear local" : "Entrá primero"}
+              {user ? "Abrir mi local" : "Entrá con tu cuenta primero"}
             </Button>
           </div>
         ) : (
           <div className="flex flex-col gap-4">
             <div>
-              <h2 className="text-lg font-bold">Recuperar acceso</h2>
+              <h2 className="text-lg font-bold">Entrá con tu llave</h2>
               <p className="mt-1 text-sm text-muted">
-                Pegá la clave de admin que guardaste cuando creaste el local.
+                Pegá la llave que guardaste cuando abriste tu local. Es la única
+                forma de volver a entrar desde otro celular.
               </p>
             </div>
             <Input
-              label="Clave de admin"
+              label="Tu llave"
               placeholder="…"
               value={token}
               onChange={(e) => setToken(e.target.value)}
@@ -175,7 +185,7 @@ export function ClaimRestaurant() {
               loading={busy}
               className="w-full py-3"
             >
-              Abrir mi local
+              Entrar
             </Button>
           </div>
         )}

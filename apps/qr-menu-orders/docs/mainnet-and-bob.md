@@ -88,20 +88,29 @@ on someone else's answer.
 | SDK has a swap API | **Verified** | `getSwapConfig()`, `getSwapTokens()`, `getSwapQuote()`, `swap()` on `usePollar()` |
 | SDK has fiat ramps | **Verified** | `openRampModal()`, `getRampCountries()`, `createOnRamp`/`createOffRamp` |
 | BOB exists in the SDK | **No** | No mention of BOB anywhere in the types; assets are per-app dashboard config |
-| A public BOB stablecoin on Stellar | **Not found** | No issuer surfaced by search. Bolivian wallets today quote BOB and settle USDC |
+| A public BOB stablecoin on Stellar | **Does not exist** | Horizon `/assets?asset_code=BOB` returns 26 issuers on mainnet and 1 on testnet — and none is the boliviano. The largest is held by 66 accounts and its home domain is `xlmeme.com`; the others resolve to an NFT marketplace, `stellarskull.io`, and a `federalreserve.us.com` joke. "BOB" is being used as a personal name, not a currency code. Bolivian wallets today quote in bolivianos and settle USDC |
 | Which swap venues / ramp countries this app has | **Unknown** | `/v2/swap/config`, `/v2/swap/tokens` and `/v2/ramps/countries` return `SDK_AUTH_INVALID_TOKEN` for an app key alone — they are per-user endpoints. Call them from a logged-in client to find out |
 
 That last row is the cheapest open question: one logged-in page calling
 `getSwapConfig()` and `getRampCountries()` answers whether swaps and Bolivian
 ramps are even switched on for this app.
 
+> A warning that follows from the table above: the dashboard's **Add token**
+> dialog searches Stellar by asset code and will happily return those meme
+> tokens for a `BOB` search. Adding one would configure a restaurant to charge
+> in a coin held by a few dozen accounts. Any asset added there needs its
+> issuer verified against a `stellar.toml`, not just a matching ticker.
+
 ## What to ask Pollar
 
 Ordered so the first answer can make the rest moot.
 
-1. **Is there a BOB asset on Pollar, on either network?** If yes: the issuer's
-   `G…`, the asset code, and whether it can be enabled under Treasury → Tokens
-   & Trustlines like USDC is.
+1. **Is there a boliviano asset anywhere in Pollar's world?** Note this is
+   not a dashboard question: Treasury → Tokens & Trustlines already accepts
+   any Stellar asset by code or issuer, so if one existed it could be added
+   today. It doesn't — the 26 mainnet issuers using the `BOB` code are meme
+   tokens (see the table above). So the question is whether Pollar issues one,
+   partners with someone who does, or plans to.
 2. **Who redeems it?** Can an owner turn BOB into bolivianos in a bank account
    or in cash, and through whom? This decides whether Path B is a product or a
    demo.

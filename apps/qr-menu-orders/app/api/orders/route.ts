@@ -1,4 +1,4 @@
-import { and, eq, inArray } from "drizzle-orm";
+import { and, eq, inArray, sql } from "drizzle-orm";
 import { db, dbReady } from "@/db/client";
 import { diningTable, menuItem, orderItem, orders, restaurant } from "@/db/schema";
 import { newMemoId } from "@/lib/ids";
@@ -71,19 +71,21 @@ export async function POST(request: Request) {
 
   const total = sum(lines.map((line) => multiply(line.item.price, line.quantity)));
 
-  const [created] = await db
-    .insert(orders)
-    .values({
-      restaurantId: spot.restaurant.id,
-      tableId: spot.table.id,
-      memoId: newMemoId(),
-      status: "pending",
-      total,
-      // Snapshot: verifying this order later must check the account that was
-      // current when it was placed, even if the owner switches accounts.
-      payToAddress: spot.restaurant.ownerAddress,
-    })
-    .returning();
+  const created = await createOrder({
+    restaurantId: spot.restaurant.id,
+    tableId: spot.table.id,
+    total,
+    // Snapshot: verifying this order later must check the account that was
+    // current when it was placed, even if the owner switches accounts.
+    payToAddress: spot.restaurant.ownerAddress,
+  });
+
+  if (!created) {
+    return Response.json(
+      { error: "No pudimos tomar el pedido. Probá de nuevo." },
+      { status: 503 }
+    );
+  }
 
   await db.insert(orderItem).values(
     lines.map((line) => ({
@@ -99,6 +101,7 @@ export async function POST(request: Request) {
     {
       order: {
         id: created.id,
+        number: created.number,
         memoId: created.memoId,
         total: created.total,
         payToAddress: created.payToAddress,
@@ -107,4 +110,38 @@ export async function POST(request: Request) {
     },
     { status: 201 }
   );
+}
+
+/**
+ * Inserts the order with the next number for that restaurant.
+ *
+ * The number comes from a read-then-write, so two diners ordering in the same
+ * instant can both compute the same one. Rather than lock the table, the
+ * unique index on (restaurant_id, number) rejects the loser and it tries
+ * again — the same approach table codes use, and cheaper for a case that
+ * happens once in a busy lunch.
+ */
+async function createOrder(input: {
+  restaurantId: string;
+  tableId: string;
+  total: string;
+  payToAddress: string;
+}) {
+  for (let attempt = 0; attempt < 5; attempt++) {
+    const [{ next }] = await db
+      .select({ next: sql<number>`coalesce(max(${orders.number}), 0) + 1` })
+      .from(orders)
+      .where(eq(orders.restaurantId, input.restaurantId));
+
+    try {
+      const [row] = await db
+        .insert(orders)
+        .values({ ...input, number: next, memoId: newMemoId(), status: "pending" })
+        .returning();
+      return row;
+    } catch (err) {
+      if (attempt === 4) throw err;
+    }
+  }
+  return null;
 }

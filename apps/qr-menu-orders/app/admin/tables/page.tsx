@@ -28,8 +28,8 @@ export default async function TablesPage() {
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Mesas</h1>
         <p className="mt-1 text-sm text-muted">
-          Un QR por mesa o mostrador. Al escanearlo se abre el menú de hoy de
-          ese lugar, así el pedido llega sabiendo a dónde va.
+          Un QR por mesa. El cliente lo escanea, ve tu menú de hoy y pide desde
+          su celular — y el pedido te llega sabiendo a qué mesa va.
         </p>
       </div>
       <TablesManager tables={withQr} />

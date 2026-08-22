@@ -35,6 +35,11 @@
   --warning-light: #fffbeb;
   --warning-border: #fde68a;
 
+  /* The coin mark that labels amounts. Circle's USDC blue, fixed in both
+     themes because it identifies the currency — a recoloured coin stops
+     being recognisable, which is the whole reason it's there. */
+  --usdc: #2775ca;
+
   /* Printed material: ink on paper, deliberately the same in both themes.
      A table sign is read off paper, not off a screen, and a QR only scans
      reliably as dark-on-light. */
@@ -110,6 +115,7 @@
   --color-warning-light: var(--warning-light);
   --color-warning-border: var(--warning-border);
   --color-logo: var(--logo);
+  --color-usdc: var(--usdc);
   --color-paper: var(--paper);
   --color-ink: var(--ink);
   --color-ink-soft: var(--ink-soft);

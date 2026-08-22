@@ -171,6 +171,7 @@ function orderColumns() {
     restaurantId: orders.restaurantId,
     tableId: orders.tableId,
     memoId: orders.memoId,
+    number: orders.number,
     status: orders.status,
     total: orders.total,
     payToAddress: orders.payToAddress,

@@ -20,7 +20,7 @@ import { looksLikeAddress } from "@/lib/payments";
 export async function POST(request: Request) {
   await dbReady();
 
-  let body: { name?: string; ownerAddress?: string };
+  let body: { name?: string; ownerAddress?: string; ownerEmail?: string };
   try {
     body = await request.json();
   } catch {
@@ -45,7 +45,13 @@ export async function POST(request: Request) {
 
   const [created] = await db
     .insert(restaurant)
-    .values({ name, slug, ownerAddress, adminTokenHash: hashToken(token) })
+    .values({
+      name,
+      slug,
+      ownerAddress,
+      ownerEmail: body.ownerEmail?.trim() || null,
+      adminTokenHash: hashToken(token),
+    })
     .returning();
 
   await setAdminCookie(token);

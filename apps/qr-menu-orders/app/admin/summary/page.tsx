@@ -1,8 +1,9 @@
 import { redirect } from "next/navigation";
+import { Money } from "@/components/Money";
 import { Card } from "@/components/ui/Card";
 import { currentRestaurant } from "@/lib/admin-auth";
 import { getBoardOrders, getTodaySummary } from "@/lib/queries";
-import { RESTAURANT_TZ, formatTime, startOfToday } from "@/lib/time";
+import { formatTime, startOfToday } from "@/lib/time";
 
 export default async function SummaryPage() {
   const restaurant = await currentRestaurant();
@@ -27,8 +28,8 @@ export default async function SummaryPage() {
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Hoy</h1>
         <p className="mt-1 text-sm text-muted">
-          El día se cuenta en hora de {RESTAURANT_TZ}, desde las{" "}
-          {formatTime(startOfToday())} — no con el reloj del servidor.
+          Tus ventas de hoy, contadas desde las {formatTime(startOfToday())}
+          en hora de Bolivia.
         </p>
       </div>
 
@@ -37,10 +38,8 @@ export default async function SummaryPage() {
           <p className="text-xs font-medium uppercase tracking-wider text-muted">
             Cobrado
           </p>
-          <p className="mt-1 font-mono text-3xl font-semibold tabular-nums">
-            {today.total}
-          </p>
-          <p className="text-sm text-muted">USDC</p>
+          <Money amount={today.total} withCoin className="mt-1 text-3xl font-semibold" />
+          <p className="text-sm text-muted">en ventas</p>
         </div>
         <div className="rounded-2xl border border-border bg-surface px-4 py-4">
           <p className="text-xs font-medium uppercase tracking-wider text-muted">

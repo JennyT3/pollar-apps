@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Input } from "@/components/ui/Input";
+import { formatMoney } from "@/components/Money";
 import type { CategoryWithItems, MenuItemRow } from "@/lib/queries";
 
 /**
@@ -315,7 +316,7 @@ function ItemRow({
           onClick={() => setEditing(true)}
           className="font-mono text-sm text-muted transition-colors hover:text-foreground"
         >
-          {item.price} USDC · editar
+          {formatMoney(item.price)} · editar
         </button>
       </div>
 

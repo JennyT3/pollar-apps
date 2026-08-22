@@ -3,6 +3,7 @@ import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { currentRestaurant } from "@/lib/admin-auth";
 import { getHistory } from "@/lib/queries";
+import { Money } from "@/components/Money";
 import { explorerTxUrl } from "@/lib/stellar";
 import { formatDateTime } from "@/lib/time";
 
@@ -17,30 +18,32 @@ export default async function HistoryPage() {
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Historial</h1>
         <p className="mt-1 text-sm text-muted">
-          Todos los pedidos pagados, con la transacción que los pagó. Cada hash
-          abre en el explorer de Stellar: cualquiera lo puede verificar, el
-          comensal incluido.
+          Todo lo que vendiste, con su comprobante. Cada uno queda registrado
+          y cualquiera puede verificarlo — vos, tu contador o el cliente.
         </p>
       </div>
 
       {orders.length === 0 ? (
         <EmptyState
-          title="Todavía no hay pedidos"
-          description="Cuando un comensal escanee el QR de una mesa y pague, el pedido queda acá para siempre."
+          title="Todavía no vendiste nada"
+          description="Cuando alguien escanee el QR de una mesa y pague, la venta queda registrada acá para siempre."
         />
       ) : (
         orders.map((order) => (
           <Card key={order.id}>
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
-                <p className="font-semibold">{order.tableLabel}</p>
+                <p className="font-semibold">
+                  Pedido #{order.number}{" "}
+                  <span className="font-normal text-muted">
+                    · {order.tableLabel}
+                  </span>
+                </p>
                 <p className="text-sm text-muted">
                   {order.paidAt ? formatDateTime(order.paidAt) : "—"}
                 </p>
               </div>
-              <span className="font-mono text-lg font-semibold tabular-nums">
-                {order.total} USDC
-              </span>
+              <Money amount={order.total} className="text-lg font-semibold" />
             </div>
 
             <ul className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-sm text-muted">
@@ -56,9 +59,9 @@ export default async function HistoryPage() {
                 href={explorerTxUrl(order.txHash)}
                 target="_blank"
                 rel="noreferrer"
-                className="mt-3 block break-all font-mono text-xs text-primary underline"
+                className="mt-3 inline-block text-sm text-primary underline"
               >
-                {order.txHash}
+                Ver comprobante ↗
               </a>
             )}
           </Card>

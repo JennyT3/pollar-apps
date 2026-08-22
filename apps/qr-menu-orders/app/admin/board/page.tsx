@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { currentRestaurant } from "@/lib/admin-auth";
+import { formatMoney } from "@/components/Money";
 import { getBoardOrders, getTodaySummary } from "@/lib/queries";
 import { Board } from "./Board";
 
@@ -18,11 +19,12 @@ export default async function BoardPage() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Pedidos</h1>
           <p className="mt-1 text-sm text-muted">
-            Todo lo que ves acá ya está pagado. Los pedidos aparecen solos.
+            Los pedidos entran solos y ya vienen pagados. Tocá para marcarlos
+          cuando los empieces y cuando los entregues.
           </p>
         </div>
         <p className="font-mono text-sm text-muted">
-          {today.count} pedidos · {today.total} USDC hoy
+          {today.count} pedidos · {formatMoney(today.total)} hoy
         </p>
       </div>
       <Board orders={orders} />

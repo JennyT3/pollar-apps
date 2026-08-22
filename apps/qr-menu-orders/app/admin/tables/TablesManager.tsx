@@ -80,7 +80,7 @@ export function TablesManager({ tables }: { tables: TableWithQr[] }) {
       {tables.length === 0 ? (
         <EmptyState
           title="Todavía no hay mesas"
-          description="Creá una por mesa, o una sola para el mostrador si vendés parado."
+          description="Creá una por cada mesa, o una sola para el mostrador si vendés parado. Cada una lleva su propio QR para imprimir y pegar."
         />
       ) : (
         <div className="grid gap-3 sm:grid-cols-2">
@@ -93,7 +93,7 @@ export function TablesManager({ tables }: { tables: TableWithQr[] }) {
                 />
                 <div className="flex min-w-0 flex-1 flex-col gap-1">
                   <p className="truncate font-semibold">{table.label}</p>
-                  <p className="font-mono text-xs text-muted">/m/{table.code}</p>
+                  <p className="text-xs text-muted">Su QR ya está listo</p>
                   <div className="mt-2 flex flex-wrap gap-2">
                     <Link
                       href={`/admin/tables/${table.id}/print`}

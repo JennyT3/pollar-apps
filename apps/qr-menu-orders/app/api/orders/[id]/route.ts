@@ -13,6 +13,7 @@ export async function GET(
   const [row] = await db
     .select({
       id: orders.id,
+      number: orders.number,
       status: orders.status,
       total: orders.total,
       memoId: orders.memoId,

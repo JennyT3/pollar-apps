@@ -31,6 +31,14 @@ export const restaurant = sqliteTable("restaurant", {
   /** Stellar address the diners' payments go to. */
   ownerAddress: text("owner_address").notNull(),
   /**
+   * How the owner is named back to themselves. The address is the account;
+   * this is the person. Stored at sign-up because the SDK keeps the profile
+   * in memory only — after a reload the server has no way to look it up, and
+   * showing someone a truncated public key where they expect to see their own
+   * name is how a product stops feeling like a product.
+   */
+  ownerEmail: text("owner_email"),
+  /**
    * SHA-256 of the admin token. A Pollar session can't be verified on the
    * server, so the address arriving in a request body proves nothing; this
    * token is what actually authorizes writes.
@@ -120,6 +128,12 @@ export const orders = sqliteTable(
      * enough to stay an exact JS integer.
      */
     memoId: integer("memo_id").notNull().unique(),
+    /**
+     * What humans call it: "Pedido #7", counted per restaurant. The memo above
+     * is a 16-digit millisecond stamp — right for matching a payment on the
+     * ledger, unusable for calling an order out across a kitchen.
+     */
+    number: integer("number").notNull().default(0),
     status: text("status", { enum: ORDER_STATUSES }).notNull().default("pending"),
     /** Decimal string. */
     total: text("total").notNull(),
@@ -141,6 +155,9 @@ export const orders = sqliteTable(
   (t) => [
     index("orders_board_idx").on(t.restaurantId, t.status, t.createdAt),
     index("orders_paid_at_idx").on(t.restaurantId, t.paidAt),
+    // One #7 per restaurant. Inserts retry on collision rather than lock, the
+    // same way table codes do.
+    uniqueIndex("orders_number_idx").on(t.restaurantId, t.number),
   ]
 );
 

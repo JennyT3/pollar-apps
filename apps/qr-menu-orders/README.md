@@ -65,11 +65,32 @@ pasted.
 
 ### Diner — `/m/<code>`
 
-Scanning a table's QR opens that spot's live menu, with the diner's own USDC
+Scanning a table's QR opens that spot's live menu, with the diner's own
 balance shown before they pick anything — deciding what to order and finding
 out you can't afford it should not be the same moment. Pick items, see the
-total, pay with one confirmation. Sold-out dishes never render, and the app never asks
-anyone to type a `G…` address.
+total, pay with one confirmation. Sold-out dishes never render, and the app
+never asks anyone to type a `G…` address.
+
+**After paying, the order reports back.** A three-step timeline — *Pedido
+recibido · En preparación · Entregado* — polls every 6 seconds, so when the
+owner advances the order on the board, the diner's phone follows on its own.
+Paying and then getting silence is the anxiety the paper version doesn't have:
+there, you watch the waiter walk away with the ticket. The tracking survives
+closing the tab (remembered per table in the browser) and clears itself once
+the food is delivered.
+
+**If the diner is short**, the app says how much is missing and offers to open
+their receive QR, so whoever is sitting across the table can send them the
+difference. While they're short the balance is re-checked every 8 seconds, so
+the pay button enables itself the moment the money lands. The SDK's
+`openRampModal()` is deliberately not used here: it is a full fiat on-ramp
+with KYC and a bank transfer — the right answer to "how does money enter the
+system", the wrong one to "this person needs $5 right now at this table", and
+network-gated besides.
+
+Amounts read as `$` with a coin mark rather than a token ticker, and orders
+carry a human number ("Pedido #7") separate from the 16-digit reference that
+matches the payment on-chain.
 
 ## Environment variables
 
