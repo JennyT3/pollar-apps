@@ -2,11 +2,10 @@
 
 import { Suspense, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { usePollar } from "@pollar/react";
 import { BackLink } from "@/components/BackLink";
-import { BalanceCard } from "@/components/BalanceCard";
 import { LoginButton } from "@/components/LoginButton";
 import { PayButton, type PaymentResult } from "@/components/PayButton";
+import { TestnetFundingBar } from "@/components/TestnetFundingBar";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
@@ -61,37 +60,6 @@ function SpikeContent() {
   return <CollectorView address={user.address} />;
 }
 
-/**
- * Testnet USDC/XLM needed to test payments come from the dashboard's
- * distribution rules, not a faucet we build ourselves — this is the SDK's
- * own claim flow (`openDistributionRulesModal`), not used anywhere else in
- * the template yet.
- */
-function FundingBar() {
-  const { openDistributionRulesModal, openEnabledAssetsModal } = usePollar();
-  return (
-    <div className="flex flex-col gap-3">
-      <BalanceCard />
-      <div className="flex flex-wrap gap-2">
-        <Button
-          variant="secondary"
-          onClick={openEnabledAssetsModal}
-          className="self-start"
-        >
-          Manage assets (trustlines)
-        </Button>
-        <Button
-          variant="secondary"
-          onClick={openDistributionRulesModal}
-          className="self-start"
-        >
-          Get testnet funds
-        </Button>
-      </div>
-    </div>
-  );
-}
-
 function CollectorView({ address }: { address: string }) {
   const [amount, setAmount] = useState("1.00");
   const [reference, setReference] = useState("spike-test");
@@ -117,7 +85,7 @@ function CollectorView({ address }: { address: string }) {
         scan the QR from a phone on the same network) to pay it.
       </p>
 
-      <FundingBar />
+      <TestnetFundingBar />
 
       <Card className="flex flex-col gap-4 p-4">
         <Input
@@ -175,7 +143,7 @@ function ParticipantView({
         </p>
       </div>
 
-      <FundingBar />
+      <TestnetFundingBar />
 
       <div className="flex flex-col divide-y divide-border rounded-xl border border-border bg-surface">
         <Row label="To" value={middleTruncate(to, 6, 6)} title={to} />

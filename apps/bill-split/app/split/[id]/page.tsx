@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import { usePollar } from "@pollar/react";
 import { BackLink } from "@/components/BackLink";
 import { LoginButton } from "@/components/LoginButton";
+import { TestnetFundingBar } from "@/components/TestnetFundingBar";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { PollarLogo } from "@/components/ui/PollarLogo";
@@ -97,6 +98,8 @@ export default function SplitPage() {
           {split.status === "closed" ? "Closed" : "Open"}
         </span>
       </div>
+
+      {split.status === "open" && <TestnetFundingBar />}
 
       <div className="flex flex-col items-center gap-3 rounded-2xl border border-border bg-surface p-6">
         <div className="rounded-xl bg-white p-3">
