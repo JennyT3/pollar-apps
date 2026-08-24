@@ -11,7 +11,10 @@ The buyer scans or opens the link, confirms once, and pays. Every payment is a *
 
 The buyer **never types a `G…` address**. QRs are app deep links.
 
-Demo video: [`Pollar QR Link.mp4`](./Pollar%20QR%20Link.mp4) — vendor setup + printable view, buyer paying fixed-amount and open-amount by scanning, sales list updating.
+Demo (vendor setup + printable view, buyer paying fixed-amount and open-amount by scanning, sales list updating):
+
+- YouTube: https://youtu.be/XTzV7j3caEY
+- File in this PR: [`Pollar QR Link.mp4`](./Pollar%20QR%20Link.mp4)
 
 ## Run from a fresh clone
 
@@ -84,5 +87,5 @@ Own JSON store `data/store.json` (vendors, charges, sales). Survives reloads. No
 - [x] Every sale is in history with hashes verifiable in the explorer
 - [x] Runs from a fresh clone with `pnpm install && pnpm dev` plus only the Pollar API key in `.env`
 - [x] Pins `@pollar/core@^0.11.0`, `@pollar/react@^0.11.0` (template: `^0.11.2`)
-- [x] Demo video: QR flow with real users in Bolivia scanning from their phones — `Pollar QR Link.mp4`
+- [x] Demo video: QR flow with real users in Bolivia scanning from their phones — https://youtu.be/XTzV7j3caEY and `Pollar QR Link.mp4`
 - [x] Complete README + demo video attached to the PR

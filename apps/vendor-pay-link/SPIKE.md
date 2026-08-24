@@ -52,4 +52,4 @@ pnpm install
 pnpm dev
 ```
 
-Open `/spike` and follow the in-app checklist. Demo video of the full QR flow (incl. phones in Bolivia): `Pollar QR Link.mp4` in this folder.
+Open `/spike` and follow the in-app checklist. Demo of the full QR flow (phones in Bolivia): https://youtu.be/XTzV7j3caEY — also `Pollar QR Link.mp4` in this folder.
