@@ -1,0 +1,8 @@
+{
+  "name": "Pasanaku digital",
+  "slug": "pasanaku-circles",
+  "description": "Círculos de ahorro rotativo: un monto fijo, un turno por ronda, aportes por QR en USDC.",
+  "category": "savings",
+  "icon": "/icon.png",
+  "url": ""
+}
