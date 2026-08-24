@@ -13,8 +13,7 @@ The buyer **never types a `G…` address**. QRs are app deep links.
 
 Demo (vendor setup + printable view, buyer paying fixed-amount and open-amount by scanning, sales list updating):
 
-- YouTube: https://youtu.be/XTzV7j3caEY
-- File in this PR: [`Pollar QR Link.mp4`](./Pollar%20QR%20Link.mp4)
+https://youtu.be/XTzV7j3caEY
 
 ## Run from a fresh clone
 
@@ -27,12 +26,12 @@ pnpm install
 pnpm dev
 ```
 
-Only env: `NEXT_PUBLIC_POLLAR_PUBLISHABLE_KEY=pub_testnet_…`  
+Only env for local: `NEXT_PUBLIC_POLLAR_PUBLISHABLE_KEY=pub_testnet_…`  
 (dashboard.pollar.xyz → Build → API Keys → publishable).
 
-`data/store.json` is created automatically (JSON persistence; no extra DB to install).
+Locally, sales persist in `data/store.json` if `DATABASE_URL` is unset. **Production uses Neon Postgres** (`DATABASE_URL` / `POSTGRES_URL`) so sales survive Vercel deploys.
 
-Production URL (also in `pollar.manifest.json` / `pollar.manifest.json`): https://pollar-qr-link.vercel.app
+Production URL (also in `pollar.manifest.json`): https://pollar-qr-link.vercel.app
 
 ## Two vendor screens (+ history)
 
@@ -53,26 +52,27 @@ Prefill is done by loading vendor + sale from our API, then paying with the **te
 
 ## Incoming payment detection (no client webhooks)
 
-1. **Primary:** buyer `onSuccess` → `POST /api/sales/{id}/confirm` with `txHash`. Sale → `paid`. Vendor does nothing.
-2. **Backup (polling):** while the vendor is logged in and `verified`, `usePaymentDetection` polls `fetchTxHistory` (~8s), parses received amounts from `summary`, `POST /api/sales/match` (oldest pending sale with that amount).
+1. **Primary:** buyer `onSuccess` → `POST /api/sales/{id}/confirm` with `txHash`. The server checks Horizon testnet (destination = vendor, amount, memo `P-{saleId}`) before marking the sale paid.
+2. **Backup (polling):** while the vendor is logged in and `verified`, `usePaymentDetection` polls `fetchTxHistory` (~8s) and `POST /api/sales/match` with candidate hashes. The server ignores client amounts and verifies each hash on Horizon the same way.
 
 ### Limits
 
-- History records expose `summary` + `hash`, **not** memo or counterparty. Backup match is **by amount**.
-- Two pending sales with the same amount can collide on backup match; the buyer callback avoids this.
-- If the buyer closes the tab before `onSuccess` and `summary` is not parseable, the sale can stay `pending` until a later poll.
+- Pollar history records expose `summary` + `hash`, **not** memo or counterparty. Confirmation never trusts the client hash blindly — Horizon must show a successful payment to the vendor for that amount with memo `P-{saleId}`.
+- If the buyer closes the tab before `onSuccess` and Horizon has not yet ingested the tx, the sale can stay `pending` until a later poll.
 - Polling requires the vendor session (history is the logged-in user).
 
 Double-pay: `claim` before `runTx`, `release` on failure, confirm rejects a second hash.
 
 ## Persistence
 
-Own JSON store `data/store.json` (vendors, charges, sales). Survives reloads. No SQLite/Postgres required for the fresh-clone path. On Vercel the filesystem is ephemeral; swap `lib/db.ts` for Postgres using `lib/types.ts` if you need durable production.
+- **Vercel / production:** Neon Postgres (`DATABASE_URL`). Tables are created on first request.
+- **Local without Postgres:** `data/store.json` (gitignored). Same schema as the DB.
 
-## Stack (nothing extra)
+## Stack
 
 - Next.js 16 App Router, React 19, TypeScript 5, Tailwind 4 (template)
 - `@pollar/core@^0.11.2`, `@pollar/react@^0.11.2` — same pins as `template/` (satisfies issue `^0.11.0`)
+- `@neondatabase/serverless` for durable sales on Vercel
 - `qrcode.react` for QR images
 - Pollar auth, balance, session, payments: **not reimplemented**
 
@@ -87,5 +87,5 @@ Own JSON store `data/store.json` (vendors, charges, sales). Survives reloads. No
 - [x] Every sale is in history with hashes verifiable in the explorer
 - [x] Runs from a fresh clone with `pnpm install && pnpm dev` plus only the Pollar API key in `.env`
 - [x] Pins `@pollar/core@^0.11.0`, `@pollar/react@^0.11.0` (template: `^0.11.2`)
-- [x] Demo video: QR flow with real users in Bolivia scanning from their phones — https://youtu.be/XTzV7j3caEY and `Pollar QR Link.mp4`
+- [x] Demo video: QR flow with real users in Bolivia scanning from their phones — https://youtu.be/XTzV7j3caEY
 - [x] Complete README + demo video attached to the PR

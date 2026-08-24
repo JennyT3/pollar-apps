@@ -10,7 +10,8 @@ import { parseReceivedAmount } from "@/lib/parse-history";
  *
  * Limits (documented in README):
  * - History records expose `summary` + `hash`, not memo or counterparty.
- * - Matching is by amount against pending sales (oldest first).
+ * - The server verifies each hash on Horizon (vendor dest, amount, memo P-{saleId}).
+ * - Client-supplied amounts are ignored.
  * - Primary confirmation is still the buyer's onSuccess callback.
  * - Only runs when the session is `verified` — otherwise refresh/history 401s spam.
  */

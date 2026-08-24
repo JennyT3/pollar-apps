@@ -7,7 +7,7 @@ type Ctx = { params: Promise<{ id: string }> };
 
 export async function GET(_request: Request, ctx: Ctx) {
   const { id } = await ctx.params;
-  const sale = getSale(id);
+  const sale = await getSale(id);
   if (!sale) {
     return NextResponse.json({ error: "Cobro no encontrado" }, { status: 404 });
   }

@@ -4,8 +4,9 @@ import { matchIncomingPayments } from "@/lib/sales";
 export const runtime = "nodejs";
 
 /**
- * Vendor client posts parsed incoming txs from Pollar history.
- * Matches them to pending sales by amount (memo is not in history API).
+ * Vendor client posts candidate hashes from Pollar history.
+ * Each hash is verified on Horizon (destination, amount, memo P-{saleId}).
+ * Client-supplied amounts are not trusted.
  */
 export async function POST(request: Request) {
   let body: {
@@ -22,6 +23,6 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid address" }, { status: 400 });
   }
   const incoming = Array.isArray(body.incoming) ? body.incoming : [];
-  const matched = matchIncomingPayments(vendorAddress, incoming);
+  const matched = await matchIncomingPayments(vendorAddress, incoming);
   return NextResponse.json({ matched });
 }

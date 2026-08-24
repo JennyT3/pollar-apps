@@ -131,8 +131,9 @@ export default function SpikePage() {
           destinatario (y el monto, si es fijo) ya listos — el comprador no
           escribe una dirección G…. Detección: callback del comprador al pagar
           (primario) + polling de{" "}
-          <code className="font-mono">fetchTxHistory</code> matcheando montos
-          (respaldo). Ver README.
+          <code className="font-mono">fetchTxHistory</code>; el servidor
+          verifica cada hash en Horizon (destino, monto, memo{" "}
+          <code className="font-mono">P-{"{saleId}"}</code>). Ver README.
         </p>
       </section>
     </main>

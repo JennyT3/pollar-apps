@@ -16,8 +16,8 @@ export async function GET(request: Request) {
   if (!/^G[A-Z2-7]{55}$/.test(address)) {
     return NextResponse.json({ error: "Invalid address" }, { status: 400 });
   }
-  const sales = listSalesForVendor(address);
-  const today = todaysPaidSales(
+  const sales = await listSalesForVendor(address);
+  const today = await todaysPaidSales(
     address,
     Number.isFinite(tzOffset) ? tzOffset : 0
   );
@@ -48,13 +48,13 @@ export async function POST(request: Request) {
   const amount = body.amount?.trim() ?? "";
   const note = body.note?.trim() || null;
 
-  if (!getVendorByAddress(vendorAddress)) {
+  if (!(await getVendorByAddress(vendorAddress))) {
     return NextResponse.json({ error: "Puesto no encontrado" }, { status: 404 });
   }
   if (!/^\d+(\.\d{1,7})?$/.test(amount) || Number(amount) <= 0) {
     return NextResponse.json({ error: "Monto inválido" }, { status: 400 });
   }
 
-  const sale = createStallSale(vendorAddress, amount, note);
+  const sale = await createStallSale(vendorAddress, amount, note);
   return NextResponse.json({ sale });
 }

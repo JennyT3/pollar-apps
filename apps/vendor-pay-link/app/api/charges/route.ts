@@ -20,7 +20,7 @@ export async function POST(request: Request) {
   const amount = body.amount?.trim() ?? "";
   const note = body.note?.trim() || null;
 
-  if (!getVendorByAddress(vendorAddress)) {
+  if (!(await getVendorByAddress(vendorAddress))) {
     return NextResponse.json(
       { error: "Configura tu puesto antes de cobrar" },
       { status: 400 }
@@ -36,6 +36,6 @@ export async function POST(request: Request) {
     );
   }
 
-  const { charge, sale } = createCharge(vendorAddress, amount, note);
+  const { charge, sale } = await createCharge(vendorAddress, amount, note);
   return NextResponse.json({ charge, sale });
 }

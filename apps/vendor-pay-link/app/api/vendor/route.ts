@@ -9,7 +9,7 @@ export async function GET(request: Request) {
   if (!address || !/^G[A-Z2-7]{55}$/.test(address)) {
     return NextResponse.json({ error: "Invalid address" }, { status: 400 });
   }
-  const vendor = getVendorByAddress(address);
+  const vendor = await getVendorByAddress(address);
   if (!vendor) {
     return NextResponse.json({ vendor: null });
   }
@@ -35,6 +35,6 @@ export async function POST(request: Request) {
       { status: 400 }
     );
   }
-  const vendor = upsertVendor(address, name);
+  const vendor = await upsertVendor(address, name);
   return NextResponse.json({ vendor });
 }

@@ -18,12 +18,14 @@ export async function POST(request: Request, ctx: Ctx) {
   if (!/^[a-fA-F0-9]{64}$/.test(txHash)) {
     return NextResponse.json({ error: "Hash inválido" }, { status: 400 });
   }
-  const result = confirmSale(id, txHash);
+  const result = await confirmSale(id, txHash);
   if (!result.ok) {
     const status =
-      result.code === "already_paid" || result.code === "duplicate_tx"
-        ? 409
-        : 404;
+      result.code === "unverified"
+        ? 400
+        : result.code === "already_paid" || result.code === "duplicate_tx"
+          ? 409
+          : 404;
     return NextResponse.json(
       { error: result.error, code: result.code },
       { status }
