@@ -43,14 +43,17 @@ export function ReceivedPaymentsList({
             {sale.kind === "charge" ? "Cobro con monto" : "QR del puesto"}
           </p>
           {sale.txHash && (
-            <a
-              href={`https://stellar.expert/explorer/testnet/tx/${sale.txHash}`}
-              target="_blank"
-              rel="noreferrer"
-              className="text-xs font-semibold text-primary hover:underline"
-            >
-              Ver comprobante
-            </a>
+            <p className="break-all font-mono text-[10px] text-muted">
+              hash {sale.txHash.slice(0, 8)}…{sale.txHash.slice(-6)}{" "}
+              <a
+                href={`https://stellar.expert/explorer/testnet/tx/${sale.txHash}`}
+                target="_blank"
+                rel="noreferrer"
+                className="font-sans text-xs font-semibold text-primary hover:underline"
+              >
+                stellar.expert
+              </a>
+            </p>
           )}
         </li>
       ))}

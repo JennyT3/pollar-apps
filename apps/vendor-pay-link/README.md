@@ -1,84 +1,88 @@
 # Puesto (`vendor-pay-link`)
 
-QR charging for informal vendors in Bolivia (caseritas, food carts, ferias), built for [pollar-apps#9](https://github.com/pollar-xyz/pollar-apps/issues/9).
+Charging tool for informal vendors on Pollar (issue [#9](https://github.com/pollar-xyz/pollar-apps/issues/9)). Built for the Bolivian public: caseritas, food carts, ferias. Validated with real phones in Bolivia (see demo video).
 
-The vendor logs in with Pollar, names the puesto, and gets a **permanent stall QR** (buyer types the amount) plus **per-sale QRs** (fixed amount + optional note, two taps). The buyer scans, pays USDC on Stellar **testnet** through the Pollar SDK, and the sale appears in **today’s sales** / **history** with an explorer link. No store, no website, no paperwork. The buyer never types a `G…` address.
+The vendor logs in with Pollar, names the puesto, and gets a charging QR — no store, no website, no paperwork.
 
-Demo video (setup, printable QR, fixed + open scans, list updating): [`Pollar QR Link.mp4`](./Pollar%20QR%20Link.mp4)
+- **Permanent stall QR** (open amount: the buyer types what they owe). Printable and taped to the counter (`/print`: big QR + vendor name, nothing else).
+- **Per-sale QR** (fixed amount + optional note) in two taps.
 
-## Fresh clone
+The buyer scans or opens the link, confirms once, and pays. Every payment is a **real USDC payment on Stellar testnet** through the Pollar SDK (`runTx('payment', …)`), into the vendor’s existing Pollar account (one balance across all Pollar apps). The vendor sees the sale land in **Hoy** without touching anything.
+
+The buyer **never types a `G…` address**. QRs are app deep links.
+
+Demo video: [`Pollar QR Link.mp4`](./Pollar%20QR%20Link.mp4) — vendor setup + printable view, buyer paying fixed-amount and open-amount by scanning, sales list updating.
+
+## Run from a fresh clone
+
+This island uses **pnpm**, same as `template/` (`packageManager: pnpm@10.23.0`). That is the command the repo tests with:
 
 ```bash
 cd apps/vendor-pay-link
 cp .env.example .env
-# dashboard.pollar.xyz → Build → API Keys → publishable `pub_testnet_…`
 pnpm install
 pnpm dev
 ```
 
-Only env required: `NEXT_PUBLIC_POLLAR_PUBLISHABLE_KEY`. JSON persistence is created automatically at `data/store.json`.
+Only env: `NEXT_PUBLIC_POLLAR_PUBLISHABLE_KEY=pub_testnet_…`  
+(dashboard.pollar.xyz → Build → API Keys → publishable).
 
-Production deploy: https://pollar-qr-link.vercel.app
+`data/store.json` is created automatically (JSON persistence; no extra DB to install).
 
-This repo is a **monorepo**. In Vercel, set **Root Directory** to `apps/vendor-pay-link` (the root has no Next.js app). Also set `NEXT_PUBLIC_POLLAR_PUBLISHABLE_KEY` in the Vercel project env. Optional: `NEXT_PUBLIC_APP_URL=https://pollar-qr-link.vercel.app` so QR links stay absolute.
+Production URL (also in `pollar.manifest.json` / `pollar.manifest.json`): https://pollar-qr-link.vercel.app
 
-## Vendor UI (two primary screens + history)
+## Two vendor screens (+ history)
 
-1. **Cobrar** — permanent stall QR + generator for a per-sale QR (amount + note).
-2. **Hoy** — today’s count, total, and list (time, amount, note, explorer link).
-3. **Historial** (`/historial`) — every paid sale (timestamp, amount, note, hash via explorer).
+1. **Cobrar (charge)** — stall QR + per-sale generator (amount + note).
+2. **Hoy (today’s sales)** — count, total, list (time, amount, note, hash).
+3. **Historial** (`/historial`) — every sale (timestamp, amount, note, hash) with stellar.expert link.
 
-Printable stall QR: **`/print`** (puesto name + large QR only — meant to be taped to the counter).
+Printable stall QR: `/print`. Spike page: `/spike`.
 
-Spike checklist: **`/spike`**.
-
-## QR kinds
+## Both QR kinds
 
 | Kind | Path | Behavior |
 |------|------|----------|
-| Permanent stall | `/pay/s/{publicCode}` | Open amount — buyer enters what they owe |
-| Per-sale | `/pay/c/{chargeId}` | Fixed amount + optional note |
+| Permanent stall (open amount) | `/pay/s/{publicCode}` | Buyer types the amount |
+| Per-sale (fixed) | `/pay/c/{chargeId}` | Amount + optional note prefills |
 
-QRs encode **this app’s URLs**, not raw Stellar addresses. Scan → Pollar login if needed → one confirmation → `runTx('payment', …)` (same path as the template PayButton / SendModal). Memo `P-{saleId}`.
+Prefill is done by loading vendor + sale from our API, then paying with the **template payment flow** (`PayButton` / `runTx('payment', …)`). Unexpected: Pollar history does not return memo, so we cannot match on memo from history — see detection below.
 
-## Incoming payment detection
+## Incoming payment detection (no client webhooks)
 
-No client-side webhooks in the SDK.
-
-1. **Primary:** buyer `onSuccess` → `POST /api/sales/{id}/confirm` `{ txHash }`. Sale becomes `paid` without the vendor doing anything.
-2. **Backup:** while the vendor is logged in and `verified`, `usePaymentDetection` polls `fetchTxHistory` (~8s), parses received amounts from `summary`, `POST /api/sales/match`.
-
-Anti double-pay: `claim` before submit, `release` on failure, confirm rejects a second hash.
+1. **Primary:** buyer `onSuccess` → `POST /api/sales/{id}/confirm` with `txHash`. Sale → `paid`. Vendor does nothing.
+2. **Backup (polling):** while the vendor is logged in and `verified`, `usePaymentDetection` polls `fetchTxHistory` (~8s), parses received amounts from `summary`, `POST /api/sales/match` (oldest pending sale with that amount).
 
 ### Limits
 
-- History API gives `summary` + `hash`, **not** memo or counterparty. Backup match is **by amount**.
+- History records expose `summary` + `hash`, **not** memo or counterparty. Backup match is **by amount**.
 - Two pending sales with the same amount can collide on backup match; the buyer callback avoids this.
-- If the buyer closes the tab before `onSuccess` and history `summary` is not parseable, the sale can stay `pending` until a later poll.
+- If the buyer closes the tab before `onSuccess` and `summary` is not parseable, the sale can stay `pending` until a later poll.
 - Polling requires the vendor session (history is the logged-in user).
+
+Double-pay: `claim` before `runTx`, `release` on failure, confirm rejects a second hash.
 
 ## Persistence
 
-JSON file `data/store.json` (vendors, charges, sales). Survives reload and `pnpm dev` restart. On Vercel the filesystem is ephemeral — swap `lib/db.ts` for Postgres/Turso using the same types in `lib/types.ts` for durable production.
+Own JSON store `data/store.json` (vendors, charges, sales). Survives reloads. No SQLite/Postgres required for the fresh-clone path. On Vercel the filesystem is ephemeral; swap `lib/db.ts` for Postgres using `lib/types.ts` if you need durable production.
 
-## Stack (template pins)
+## Stack (nothing extra)
 
-- Next.js 16 App Router, React 19, TypeScript 5, Tailwind 4
-- `@pollar/core@^0.11.2`, `@pollar/react@^0.11.2` (same pins as `template/`)
+- Next.js 16 App Router, React 19, TypeScript 5, Tailwind 4 (template)
+- `@pollar/core@^0.11.2`, `@pollar/react@^0.11.2` — same pins as `template/` (satisfies issue `^0.11.0`)
 - `qrcode.react` for QR images
-- Pollar auth / balance / `runTx` are **not** reimplemented
-
-UI copy shows **USD** (USDC under the hood). No XLM, swap, or wallet-address primary flow.
+- Pollar auth, balance, session, payments: **not reimplemented**
 
 ## Acceptance (issue #9)
 
-- [x] Spike: fixed + open QR, two Pollar accounts, hashes recorded — see `SPIKE.md`
-- [x] Permanent stall QR + printable `/print`
-- [x] Per-sale amount + note in two taps
-- [x] Buyers pay by scanning; real testnet payments
-- [x] App marks sales paid without vendor action
-- [x] Today’s sales: count, total, list
-- [x] History with hashes / explorer links
-- [x] `pnpm install && pnpm dev` + Pollar key only
-- [x] SDK pins match the template
-- [x] Demo video (Bolivia QR flow on phones): `Pollar QR Link.mp4`
+- [x] Spike: fixed-amount and open-amount QR between two Pollar accounts on testnet; hashes captured and detected — `SPIKE.md`, `/spike`
+- [x] Permanent stall QR with clean printable view — `/print`
+- [x] Per-sale charges with amount and note generate a QR/link in two taps
+- [x] Buyers pay by scanning; real testnet payments land in the vendor’s Pollar balance
+- [x] App detects incoming payments and marks each sale paid without the vendor touching anything
+- [x] Today’s sales shows count, total, and the list of sales
+- [x] Every sale is in history with hashes verifiable in the explorer
+- [x] Runs from a fresh clone with `pnpm install && pnpm dev` plus only the Pollar API key in `.env`
+- [x] Pins `@pollar/core@^0.11.0`, `@pollar/react@^0.11.0` (template: `^0.11.2`)
+- [x] Demo video: QR flow with real users in Bolivia scanning from their phones — `Pollar QR Link.mp4`
+- [x] Complete README + demo video attached to the PR
