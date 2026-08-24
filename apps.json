@@ -24,9 +24,9 @@
     {
       "slug": "vendor-pay-link",
       "category": "commerce",
-      "issue": null,
+      "issue": "https://github.com/pollar-xyz/pollar-apps/issues/9",
       "deploy": null,
-      "author": null
+      "author": "wrever"
     },
     {
       "slug": "qr-menu-orders",
