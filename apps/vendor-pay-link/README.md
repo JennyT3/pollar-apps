@@ -18,6 +18,10 @@ pnpm dev
 
 Only env required: `NEXT_PUBLIC_POLLAR_PUBLISHABLE_KEY`. JSON persistence is created automatically at `data/store.json`.
 
+Production deploy: https://pollar-qr-link.vercel.app
+
+This repo is a **monorepo**. In Vercel, set **Root Directory** to `apps/vendor-pay-link` (the root has no Next.js app). Also set `NEXT_PUBLIC_POLLAR_PUBLISHABLE_KEY` in the Vercel project env. Optional: `NEXT_PUBLIC_APP_URL=https://pollar-qr-link.vercel.app` so QR links stay absolute.
+
 ## Vendor UI (two primary screens + history)
 
 1. **Cobrar** — permanent stall QR + generator for a per-sale QR (amount + note).

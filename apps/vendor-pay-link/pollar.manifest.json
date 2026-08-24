@@ -4,5 +4,5 @@
   "description": "Cobro con QR para puestos, carritos y ferias: QR permanente de monto abierto y cobros por venta, pagos USDC en Pollar.",
   "category": "commerce",
   "icon": "/icon.svg",
-  "url": ""
+  "url": "https://pollar-qr-link.vercel.app"
 }
