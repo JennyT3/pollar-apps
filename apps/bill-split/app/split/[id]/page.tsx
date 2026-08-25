@@ -116,7 +116,11 @@ export default function SplitPage() {
 
       <div className="flex flex-col items-center gap-3 rounded-2xl border border-border bg-surface p-6">
         <div className="rounded-xl bg-white p-3">
-          <QRCodeSVG value={link} size={180} />
+          <QRCodeSVG
+            value={link}
+            size={180}
+            title={`QR code linking to the "${split.description}" split`}
+          />
         </div>
         <p className="break-all text-center font-mono text-xs text-muted">{link}</p>
         <p className="text-center text-xs text-muted-light">

@@ -72,12 +72,13 @@ function SpikeContent() {
 function CollectorView({ address }: { address: string }) {
   const [amount, setAmount] = useState("1.00");
   const [reference, setReference] = useState("spike-test");
+  const amountValid = /^\d+(\.\d{1,7})?$/.test(amount) && Number(amount) > 0;
 
   // `useIsClient` keeps the server render and React's first client pass in
   // agreement (both "not yet"), so this never mismatches during hydration
   // the way computing it unconditionally would.
   const isClient = useIsClient();
-  const link = isClient ? buildSpikeLink(address, amount, reference) : "";
+  const link = isClient && amountValid ? buildSpikeLink(address, amount, reference) : "";
 
   return (
     <main className="mx-auto flex w-full max-w-md flex-1 flex-col gap-5 px-4 py-8">
@@ -99,6 +100,7 @@ function CollectorView({ address }: { address: string }) {
           inputMode="decimal"
           value={amount}
           onChange={(e) => setAmount(e.target.value.replace(",", "."))}
+          error={amount && !amountValid ? "Enter a valid amount" : undefined}
         />
         <Input
           label="Reference (memo)"
@@ -114,10 +116,10 @@ function CollectorView({ address }: { address: string }) {
         </div>
       </Card>
 
-      {link && amount && (
+      {link && (
         <div className="flex flex-col items-center gap-3 rounded-2xl border border-border bg-surface p-6">
           <div className="rounded-xl bg-white p-3">
-            <QRCodeSVG value={link} size={200} />
+            <QRCodeSVG value={link} size={200} title="QR code for the test payment" />
           </div>
           <p className="break-all text-center font-mono text-xs text-muted">
             {link}
