@@ -15,8 +15,13 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const body = await req.json();
-  const { participantId, payerAddress, hash } = body;
+  let body: unknown;
+  try {
+    body = await req.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+  }
+  const { participantId, payerAddress, hash } = body as Record<string, unknown>;
 
   if (
     typeof participantId !== "string" ||

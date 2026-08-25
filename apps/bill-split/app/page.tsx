@@ -21,10 +21,16 @@ export default function Home() {
 
   useEffect(() => {
     if (!user) return;
+    let ignore = false;
     fetch(`/api/splits?collector=${user.address}`)
-      .then((res) => res.json())
-      .then((data) => setSplits(data.splits))
-      .catch(() => setSplits([]));
+      .then(async (res) => (res.ok ? (await res.json()).splits : []))
+      .catch(() => [])
+      .then((splits) => {
+        if (!ignore) setSplits(splits);
+      });
+    return () => {
+      ignore = true;
+    };
   }, [user]);
 
   if (!user) {

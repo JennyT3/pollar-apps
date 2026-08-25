@@ -6,8 +6,16 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const body = await req.json();
-  const { collectorAddress } = body;
+  let body: unknown;
+  try {
+    body = await req.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+  }
+  const { collectorAddress } = body as Record<string, unknown>;
+  if (typeof collectorAddress !== "string") {
+    return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
+  }
 
   const split = await getSplit(id);
   if (!split) {

@@ -16,6 +16,13 @@ import { QRCodeSVG } from "qrcode.react";
 
 const POLL_MS = 4000;
 
+async function fetchSplit(id: string): Promise<{ notFound: true } | { split: Split }> {
+  const res = await fetch(`/api/splits/${id}`);
+  if (res.status === 404) return { notFound: true };
+  const data = await res.json();
+  return { split: data.split };
+}
+
 export default function SplitPage() {
   const { id } = useParams<{ id: string }>();
   const { user } = usePollarAuth();
@@ -23,25 +30,17 @@ export default function SplitPage() {
   const [notFound, setNotFound] = useState(false);
 
   const refresh = useCallback(async () => {
-    const res = await fetch(`/api/splits/${id}`);
-    if (res.status === 404) {
-      setNotFound(true);
-      return;
-    }
-    const data = await res.json();
-    setSplit(data.split);
+    const result = await fetchSplit(id);
+    if ("notFound" in result) setNotFound(true);
+    else setSplit(result.split);
   }, [id]);
 
   useEffect(() => {
     let ignore = false;
-    fetch(`/api/splits/${id}`).then(async (res) => {
+    fetchSplit(id).then((result) => {
       if (ignore) return;
-      if (res.status === 404) {
-        setNotFound(true);
-        return;
-      }
-      const data = await res.json();
-      if (!ignore) setSplit(data.split);
+      if ("notFound" in result) setNotFound(true);
+      else setSplit(result.split);
     });
     return () => {
       ignore = true;
@@ -315,29 +314,40 @@ function CloseButton({
   onClosed: () => void;
 }) {
   const [closing, setClosing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   async function close() {
     setClosing(true);
+    setError(null);
     try {
-      await fetch(`/api/splits/${splitId}/close`, {
+      const res = await fetch(`/api/splits/${splitId}/close`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ collectorAddress }),
       });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error ?? "Could not close the split.");
+      }
       onClosed();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not close the split.");
     } finally {
       setClosing(false);
     }
   }
 
   return (
-    <Button
-      variant="ghost"
-      onClick={() => void close()}
-      loading={closing}
-      className="self-center"
-    >
-      Close split
-    </Button>
+    <div className="flex flex-col items-center gap-2">
+      <Button
+        variant="ghost"
+        onClick={() => void close()}
+        loading={closing}
+        className="self-center"
+      >
+        Close split
+      </Button>
+      {error && <p className="text-sm text-error">{error}</p>}
+    </div>
   );
 }
