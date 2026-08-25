@@ -1,18 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
+import { apiRoute } from "@/lib/api";
 import { createSplit, listSplitsByCollector } from "@/lib/db";
 import { looksLikeAddress } from "@/lib/payments";
 
 const AMOUNT_RE = /^\d+(\.\d{1,2})?$/;
 
-export async function GET(req: NextRequest) {
+export const GET = apiRoute(async (req: NextRequest) => {
   const collector = req.nextUrl.searchParams.get("collector");
   if (!collector) {
     return NextResponse.json({ error: "Missing collector" }, { status: 400 });
   }
   return NextResponse.json({ splits: await listSplitsByCollector(collector) });
-}
+});
 
-export async function POST(req: NextRequest) {
+export const POST = apiRoute(async (req: NextRequest) => {
   let body: unknown;
   try {
     body = await req.json();
@@ -61,4 +62,4 @@ export async function POST(req: NextRequest) {
   });
 
   return NextResponse.json({ split }, { status: 201 });
-}
+});

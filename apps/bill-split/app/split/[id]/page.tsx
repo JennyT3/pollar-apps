@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { usePollar } from "@pollar/react";
 import { BackLink } from "@/components/BackLink";
@@ -9,6 +9,7 @@ import { TestnetFundingBar } from "@/components/TestnetFundingBar";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { PollarLogo } from "@/components/ui/PollarLogo";
+import { useIsClient } from "@/hooks/useIsClient";
 import { usePollarAuth } from "@/hooks/usePollarAuth";
 import { formatAmount, middleTruncate } from "@/lib/format";
 import { assetFromSplit, type Split, type SplitParticipant } from "@/lib/split";
@@ -53,10 +54,11 @@ export default function SplitPage() {
     return () => clearInterval(timer);
   }, [split, refresh]);
 
-  const link = useMemo(() => {
-    if (typeof window === "undefined") return "";
-    return `${window.location.origin}/split/${id}`;
-  }, [id]);
+  // `useIsClient` keeps the server render and React's first client pass in
+  // agreement (both "not yet"), so this never mismatches during hydration
+  // the way computing it unconditionally would.
+  const isClient = useIsClient();
+  const link = isClient ? `${window.location.origin}/split/${id}` : "";
 
   if (notFound) {
     return (
@@ -275,7 +277,7 @@ function ParticipantRow({
           </Button>
         </div>
       ) : state.step === "record-failed" ? (
-        <Button onClick={() => void record(state.hash)} loading={false} className="w-full">
+        <Button onClick={() => void record(state.hash)} className="w-full">
           Retry confirming payment
         </Button>
       ) : (

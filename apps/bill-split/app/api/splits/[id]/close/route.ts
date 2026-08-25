@@ -1,10 +1,11 @@
 import { NextResponse } from "next/server";
+import { apiRoute } from "@/lib/api";
 import { closeSplit, getSplit } from "@/lib/db";
 
-export async function POST(
+export const POST = apiRoute(async (
   req: Request,
   { params }: { params: Promise<{ id: string }> }
-) {
+) => {
   const { id } = await params;
   let body: unknown;
   try {
@@ -29,4 +30,4 @@ export async function POST(
 
   await closeSplit(id);
   return NextResponse.json({ split: await getSplit(id) });
-}
+});

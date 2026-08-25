@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useMemo, useState } from "react";
+import { Suspense, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { BackLink } from "@/components/BackLink";
 import { LoginButton } from "@/components/LoginButton";
@@ -10,10 +10,19 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { PollarLogo } from "@/components/ui/PollarLogo";
+import { useIsClient } from "@/hooks/useIsClient";
 import { usePollarAuth } from "@/hooks/usePollarAuth";
 import { middleTruncate } from "@/lib/format";
 import { looksLikeAddress } from "@/lib/payments";
 import { QRCodeSVG } from "qrcode.react";
+
+function buildSpikeLink(address: string, amount: string, reference: string): string {
+  const url = new URL("/spike", window.location.origin);
+  url.searchParams.set("to", address);
+  url.searchParams.set("amount", amount);
+  if (reference) url.searchParams.set("ref", reference);
+  return url.toString();
+}
 
 /**
  * Spike page for issue #6's blocking criterion: prove the QR-prefilled
@@ -64,14 +73,11 @@ function CollectorView({ address }: { address: string }) {
   const [amount, setAmount] = useState("1.00");
   const [reference, setReference] = useState("spike-test");
 
-  const link = useMemo(() => {
-    if (typeof window === "undefined") return "";
-    const url = new URL("/spike", window.location.origin);
-    url.searchParams.set("to", address);
-    url.searchParams.set("amount", amount);
-    if (reference) url.searchParams.set("ref", reference);
-    return url.toString();
-  }, [address, amount, reference]);
+  // `useIsClient` keeps the server render and React's first client pass in
+  // agreement (both "not yet"), so this never mismatches during hydration
+  // the way computing it unconditionally would.
+  const isClient = useIsClient();
+  const link = isClient ? buildSpikeLink(address, amount, reference) : "";
 
   return (
     <main className="mx-auto flex w-full max-w-md flex-1 flex-col gap-5 px-4 py-8">

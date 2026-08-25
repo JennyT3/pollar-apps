@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { apiRoute } from "@/lib/api";
 import {
   allParticipantsPaid,
   closeSplit,
@@ -10,10 +11,10 @@ import {
 import { looksLikeAddress } from "@/lib/payments";
 import { verifyPayment } from "@/lib/stellar";
 
-export async function POST(
+export const POST = apiRoute(async (
   req: Request,
   { params }: { params: Promise<{ id: string }> }
-) {
+) => {
   const { id } = await params;
   let body: unknown;
   try {
@@ -82,4 +83,4 @@ export async function POST(
   }
 
   return NextResponse.json({ split: await getSplit(id) });
-}
+});
