@@ -51,6 +51,12 @@ async function ready(): Promise<NeonQueryFunction<false, false>> {
     `;
     await sql`CREATE INDEX IF NOT EXISTS idx_participants_split_id ON split_participants(split_id)`;
     await sql`CREATE INDEX IF NOT EXISTS idx_splits_collector ON splits(collector_address)`;
+    // Partial (NULLs excluded) so unpaid rows don't collide, but one real
+    // payment can never be recorded against two different participants.
+    await sql`
+      CREATE UNIQUE INDEX IF NOT EXISTS idx_participants_tx_hash
+      ON split_participants(tx_hash) WHERE tx_hash IS NOT NULL
+    `;
   })();
   await globalDb.__billSplitReady;
   return sql;
@@ -107,29 +113,30 @@ export async function createSplit(input: {
   const id = crypto.randomUUID();
   const shortRef = id.replace(/-/g, "").slice(0, 8);
   const createdAt = new Date().toISOString();
+  const participants: SplitParticipant[] = input.participants.map((p) => ({
+    id: crypto.randomUUID(),
+    splitId: id,
+    label: p.label,
+    shareAmount: p.shareAmount,
+    payerAddress: null,
+    txHash: null,
+    paidAt: null,
+  }));
 
-  await sql`
-    INSERT INTO splits (id, short_ref, description, total_amount, asset_code, asset_issuer, collector_address, status, created_at)
-    VALUES (${id}, ${shortRef}, ${input.description}, ${input.totalAmount}, ${input.assetCode}, ${input.assetIssuer}, ${input.collectorAddress}, 'open', ${createdAt})
-  `;
-
-  const participants: SplitParticipant[] = [];
-  for (const p of input.participants) {
-    const participantId = crypto.randomUUID();
-    await sql`
-      INSERT INTO split_participants (id, split_id, label, share_amount)
-      VALUES (${participantId}, ${id}, ${p.label}, ${p.shareAmount})
-    `;
-    participants.push({
-      id: participantId,
-      splitId: id,
-      label: p.label,
-      shareAmount: p.shareAmount,
-      payerAddress: null,
-      txHash: null,
-      paidAt: null,
-    });
-  }
+  // One round trip, all-or-nothing: a split is never left half-created if
+  // an insert partway through fails.
+  await sql.transaction((tx) => [
+    tx`
+      INSERT INTO splits (id, short_ref, description, total_amount, asset_code, asset_issuer, collector_address, status, created_at)
+      VALUES (${id}, ${shortRef}, ${input.description}, ${input.totalAmount}, ${input.assetCode}, ${input.assetIssuer}, ${input.collectorAddress}, 'open', ${createdAt})
+    `,
+    ...participants.map(
+      (p) => tx`
+        INSERT INTO split_participants (id, split_id, label, share_amount)
+        VALUES (${p.id}, ${id}, ${p.label}, ${p.shareAmount})
+      `
+    ),
+  ]);
 
   return {
     id,
@@ -171,17 +178,40 @@ export async function getParticipant(id: string): Promise<SplitParticipant | nul
   return rows[0] ? toParticipant(rows[0]) : null;
 }
 
+/**
+ * Records a payment only if the participant is still unpaid, atomically —
+ * `WHERE paid_at IS NULL` in the same query closes the race window between
+ * an earlier "already paid?" check and this write. Returns false if someone
+ * else's request won that race, or if `hash` was already used elsewhere
+ * (caught via the unique index on tx_hash) — both are "don't record it"
+ * outcomes for the caller, not exceptions.
+ */
 export async function recordPayment(
   participantId: string,
   payerAddress: string,
   hash: string
-): Promise<void> {
+): Promise<boolean> {
   const sql = await ready();
-  await sql`
-    UPDATE split_participants
-    SET payer_address = ${payerAddress}, tx_hash = ${hash}, paid_at = ${new Date().toISOString()}
-    WHERE id = ${participantId}
-  `;
+  try {
+    const rows = await sql`
+      UPDATE split_participants
+      SET payer_address = ${payerAddress}, tx_hash = ${hash}, paid_at = ${new Date().toISOString()}
+      WHERE id = ${participantId} AND paid_at IS NULL
+      RETURNING id
+    `;
+    return rows.length > 0;
+  } catch (err) {
+    if (err instanceof Error && "code" in err && err.code === "23505") {
+      return false; // unique violation: this hash is already recorded
+    }
+    throw err;
+  }
+}
+
+export async function isHashUsed(hash: string): Promise<boolean> {
+  const sql = await ready();
+  const rows = await sql`SELECT 1 FROM split_participants WHERE tx_hash = ${hash}`;
+  return rows.length > 0;
 }
 
 export async function closeSplit(id: string): Promise<void> {

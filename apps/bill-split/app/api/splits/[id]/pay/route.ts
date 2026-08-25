@@ -4,8 +4,10 @@ import {
   closeSplit,
   getParticipant,
   getSplit,
+  isHashUsed,
   recordPayment,
 } from "@/lib/db";
+import { looksLikeAddress } from "@/lib/payments";
 import { verifyPayment } from "@/lib/stellar";
 
 export async function POST(
@@ -19,7 +21,9 @@ export async function POST(
   if (
     typeof participantId !== "string" ||
     typeof payerAddress !== "string" ||
-    typeof hash !== "string"
+    !looksLikeAddress(payerAddress) ||
+    typeof hash !== "string" ||
+    !hash
   ) {
     return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
   }
@@ -27,6 +31,9 @@ export async function POST(
   const split = await getSplit(id);
   if (!split) {
     return NextResponse.json({ error: "Split not found" }, { status: 404 });
+  }
+  if (split.status === "closed") {
+    return NextResponse.json({ error: "This split is closed" }, { status: 409 });
   }
 
   const participant = await getParticipant(participantId);
@@ -37,7 +44,15 @@ export async function POST(
     return NextResponse.json({ error: "Already paid" }, { status: 409 });
   }
 
+  if (await isHashUsed(hash)) {
+    return NextResponse.json(
+      { error: "This transaction has already been used to pay a share" },
+      { status: 409 }
+    );
+  }
+
   const verified = await verifyPayment(hash, {
+    from: payerAddress,
     to: split.collectorAddress,
     assetCode: split.assetCode,
     assetIssuer: split.assetIssuer,
@@ -50,7 +65,13 @@ export async function POST(
     );
   }
 
-  await recordPayment(participantId, payerAddress, hash);
+  const recorded = await recordPayment(participantId, payerAddress, hash);
+  if (!recorded) {
+    return NextResponse.json(
+      { error: "This share was already paid, or that transaction was already used" },
+      { status: 409 }
+    );
+  }
   if (await allParticipantsPaid(id)) {
     await closeSplit(id);
   }

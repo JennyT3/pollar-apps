@@ -73,10 +73,31 @@ After `runTx('payment', …)` returns a hash, the client sends it to
 `POST /api/splits/[id]/pay`, and the server independently checks it against
 Stellar's public testnet Horizon API (`GET
 /transactions/{hash}/operations`) before recording anything — confirming a
-real payment operation exists for that hash, to the split's collector
-address, in the split's asset, for at least the participant's share. No
-Pollar key involved in that check; it's the public Stellar network. A
-tampered or unrelated hash gets rejected with a 422.
+real payment operation exists for that hash, **from** the claimed payer,
+**to** the split's collector address, in the split's asset, for at least
+the participant's share. No Pollar key involved in that check; it's the
+public Stellar network.
+
+A few things this specifically guards against, since this is a payments
+app and it's worth being explicit:
+
+- **A spoofed payer.** Checking `from` (not just `to`/asset/amount) means
+  nobody can take someone else's real hash and claim it under their own
+  address — the sender on-chain has to match who's claiming the payment.
+- **Hash reuse.** A unique index on `tx_hash` (partial: `NULL`s excluded,
+  so unpaid rows don't collide with each other) means one real payment can
+  never be recorded against two different participants, in this split or
+  any other.
+- **A double-pay race.** Recording a payment is a single conditional
+  `UPDATE … WHERE paid_at IS NULL RETURNING id` — if two requests for the
+  same share land at once, only one can win; the loser gets a 409, not a
+  second, silently-ignored payment.
+- **Payments after close.** A closed split (auto- or manually closed)
+  rejects further `pay` calls outright, even if a request was already
+  in flight.
+
+A tampered, unrelated, or already-used hash gets rejected with a 409/422,
+not silently ignored — the client surfaces the server's error.
 
 ## QR mechanics
 
