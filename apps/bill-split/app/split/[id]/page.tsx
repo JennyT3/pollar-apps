@@ -33,8 +33,20 @@ export default function SplitPage() {
   }, [id]);
 
   useEffect(() => {
-    void refresh();
-  }, [refresh]);
+    let ignore = false;
+    fetch(`/api/splits/${id}`).then(async (res) => {
+      if (ignore) return;
+      if (res.status === 404) {
+        setNotFound(true);
+        return;
+      }
+      const data = await res.json();
+      if (!ignore) setSplit(data.split);
+    });
+    return () => {
+      ignore = true;
+    };
+  }, [id]);
 
   useEffect(() => {
     if (!split || split.status !== "open") return;
@@ -142,14 +154,48 @@ function ParticipantRow({
   onPaid: () => void;
 }) {
   const { runTx } = usePollar();
-  const [step, setStep] = useState<
-    "idle" | "confirming" | "processing" | "error"
-  >("idle");
-  const [error, setError] = useState<string | null>(null);
+  const [state, setState] = useState<
+    | { step: "idle" }
+    | { step: "confirming" }
+    | { step: "paying" }
+    | { step: "recording"; hash: string }
+    // The on-chain payment already succeeded here — only the recording
+    // step failed (e.g. a dropped connection). Retrying must re-submit the
+    // same hash, never trigger a second real payment.
+    | { step: "record-failed"; hash: string; message: string }
+    | { step: "pay-failed"; message: string }
+  >({ step: "idle" });
+
+  async function record(hash: string) {
+    setState({ step: "recording", hash });
+    try {
+      const res = await fetch(`/api/splits/${split.id}/pay`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          participantId: participant.id,
+          payerAddress: userAddress,
+          hash,
+        }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error ?? "Payment sent but could not be recorded.");
+      }
+      setState({ step: "idle" });
+      onPaid();
+    } catch (err) {
+      setState({
+        step: "record-failed",
+        hash,
+        message:
+          err instanceof Error ? err.message : "Payment sent but could not be recorded.",
+      });
+    }
+  }
 
   async function pay() {
-    setStep("processing");
-    setError(null);
+    setState({ step: "paying" });
     try {
       const result = await runTx(
         "payment",
@@ -161,34 +207,21 @@ function ParticipantRow({
         { memo: { type: "text", value: split.shortRef } }
       );
       if (result.status === "error") {
-        setStep("error");
-        setError(
-          result.message ??
+        setState({
+          step: "pay-failed",
+          message:
+            result.message ??
             result.details ??
-            "The payment didn't go through. Check your balance and try again."
-        );
+            "The payment didn't go through. Check your balance and try again.",
+        });
         return;
       }
-
-      const res = await fetch(`/api/splits/${split.id}/pay`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          participantId: participant.id,
-          payerAddress: userAddress,
-          hash: result.hash,
-        }),
-      });
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        throw new Error(data.error ?? "Payment sent but could not be recorded.");
-      }
-
-      setStep("idle");
-      onPaid();
+      await record(result.hash);
     } catch (err) {
-      setStep("error");
-      setError(err instanceof Error ? err.message : "The payment didn't go through.");
+      setState({
+        step: "pay-failed",
+        message: err instanceof Error ? err.message : "The payment didn't go through.",
+      });
     }
   }
 
@@ -229,27 +262,45 @@ function ParticipantRow({
         </span>
       </div>
 
-      {step === "confirming" ? (
+      {state.step === "confirming" ? (
         <div className="flex gap-2">
           <Button onClick={() => void pay()} className="flex-1">
             Confirm
           </Button>
-          <Button variant="secondary" onClick={() => setStep("idle")} className="flex-1">
+          <Button
+            variant="secondary"
+            onClick={() => setState({ step: "idle" })}
+            className="flex-1"
+          >
             Cancel
           </Button>
         </div>
+      ) : state.step === "record-failed" ? (
+        <Button onClick={() => void record(state.hash)} loading={false} className="w-full">
+          Retry confirming payment
+        </Button>
       ) : (
         <Button
           variant="secondary"
-          onClick={() => setStep("confirming")}
-          loading={step === "processing"}
+          onClick={() => setState({ step: "confirming" })}
+          loading={state.step === "paying" || state.step === "recording"}
           className="w-full"
         >
-          {step === "processing" ? "Processing…" : "Pay this share"}
+          {state.step === "paying"
+            ? "Paying…"
+            : state.step === "recording"
+              ? "Confirming…"
+              : "Pay this share"}
         </Button>
       )}
 
-      {error && <p className="text-sm text-error">{error}</p>}
+      {state.step === "record-failed" && (
+        <p className="text-sm text-error">
+          Your payment went through — {state.message} Tap retry, this won&apos;t charge
+          you again.
+        </p>
+      )}
+      {state.step === "pay-failed" && <p className="text-sm text-error">{state.message}</p>}
     </Card>
   );
 }

@@ -47,20 +47,33 @@ export default function NewSplitPage() {
     );
   }
 
-  const totalValid = /^\d+(\.\d{1,2})?$/.test(totalAmount) && Number(totalAmount) > 0;
+  const AMOUNT_RE = /^\d+(\.\d{1,2})?$/;
+  const totalValid = AMOUNT_RE.test(totalAmount) && Number(totalAmount) > 0;
   const labelsValid = participants.every((p) => p.label.trim().length > 0);
+  const trimmedLabels = participants.map((p) => p.label.trim().toLowerCase());
+  const labelsUnique =
+    new Set(trimmedLabels.filter(Boolean)).size ===
+    trimmedLabels.filter(Boolean).length;
   const sharesSum = participants.reduce((sum, p) => sum + Number(p.shareAmount || 0), 0);
   const customSumValid =
     mode === "custom" &&
     totalValid &&
     Math.abs(sharesSum - Number(totalAmount)) < 0.01 &&
-    participants.every((p) => Number(p.shareAmount) > 0);
+    participants.every((p) => AMOUNT_RE.test(p.shareAmount) && Number(p.shareAmount) > 0);
+  // Equal split rounds to cents — too small a total for the headcount would
+  // leave someone with a $0.00 share, which the server rejects outright.
+  const equalSplitTooSmall =
+    mode === "equal" &&
+    totalValid &&
+    Number(totalAmount) < participants.length * 0.01;
 
   const formValid =
     description.trim().length > 0 &&
     totalValid &&
     participants.length >= 1 &&
     labelsValid &&
+    labelsUnique &&
+    !equalSplitTooSmall &&
     (mode === "equal" || customSumValid);
 
   function updateParticipant(index: number, patch: Partial<ParticipantDraft>) {
@@ -149,6 +162,7 @@ export default function NewSplitPage() {
           <div className="flex gap-1 rounded-lg border border-border p-1">
             <button
               onClick={() => setMode("equal")}
+              aria-pressed={mode === "equal"}
               className={`rounded-md px-3 py-1 text-xs font-semibold transition-colors ${
                 mode === "equal"
                   ? "bg-primary text-primary-foreground"
@@ -159,6 +173,7 @@ export default function NewSplitPage() {
             </button>
             <button
               onClick={() => setMode("custom")}
+              aria-pressed={mode === "custom"}
               className={`rounded-md px-3 py-1 text-xs font-semibold transition-colors ${
                 mode === "custom"
                   ? "bg-primary text-primary-foreground"
@@ -206,6 +221,19 @@ export default function NewSplitPage() {
         <Button variant="ghost" onClick={addParticipant} className="self-start">
           + Add person
         </Button>
+
+        {!labelsUnique && (
+          <p className="text-sm text-error">
+            Two people have the same name — use something that tells them
+            apart (e.g. last initials).
+          </p>
+        )}
+        {equalSplitTooSmall && (
+          <p className="text-sm text-error">
+            That total is too small to split evenly between{" "}
+            {participants.length} people — someone would end up owing $0.00.
+          </p>
+        )}
 
         {mode === "custom" && totalValid && (
           <p
