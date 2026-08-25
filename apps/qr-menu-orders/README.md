@@ -44,6 +44,113 @@ In the Pollar dashboard you also need, once per app:
 - **Treasury → Account Funding**: fund the app wallet, and set **Starting XLM
   balance** to 1 or 2 — see [Diners need a little XLM](#diners-need-a-little-xlm)
 
+## How it works, at a glance
+
+### The owner sets up the shop
+
+```mermaid
+flowchart LR
+    A[Log in with Pollar] --> B[Create the restaurant]
+    B --> C[Admin key issued<br/>shown once]
+    B --> D[Owner address stored<br/>where money lands]
+    C --> E[Load the menu]
+    E --> F[Categories]
+    E --> G[Dishes<br/>name · price · photo]
+    G --> H{Sold out?}
+    H -->|one tap| I[Hidden from every<br/>live menu instantly]
+    E --> J[Create tables]
+    J --> K[One QR per table]
+    K --> L[Printable sign<br/>taped to the table]
+```
+
+### A diner orders and pays
+
+```mermaid
+sequenceDiagram
+    actor D as Diner
+    participant App as Menu /m/code
+    participant API as This app
+    participant P as Pollar SDK
+    participant S as Stellar
+
+    D->>App: Scans the table QR
+    App->>API: Load live menu
+    API-->>App: Available dishes only
+    D->>App: Picks items
+    App-->>D: Shows total and their balance
+    D->>App: Pay
+    App->>API: POST /api/orders
+    Note over API: Total computed from the DB,<br/>never from the request
+    API-->>App: order number + memoId + owner address
+    App->>P: runTx payment with memo id
+    P->>S: Submits the transaction
+    S-->>P: hash
+    P-->>App: hash
+    App->>API: POST /api/orders/id/confirm
+    API->>S: Verify against Horizon
+    S-->>API: transaction + operations
+    Note over API: 5 checks: success, destination,<br/>amount, asset, memo
+    API-->>App: Order paid
+    App-->>D: Receipt + live tracking
+```
+
+### The order's life, and what each side sees
+
+```mermaid
+stateDiagram-v2
+    [*] --> pending: diner taps Pay
+    pending --> paid: verified on the ledger
+    pending --> expired: 30 min unpaid
+    paid --> preparing: owner taps Empezar a preparar
+    preparing --> delivered: owner taps Marcar entregado
+    delivered --> [*]
+
+    note right of paid
+        Diner sees: Pedido recibido
+        Owner sees: it on the board
+    end note
+    note right of preparing
+        Diner sees: En preparación
+    end note
+    note right of delivered
+        Diner sees: Entregado
+        Tracking clears itself
+    end note
+```
+
+### Detecting the payment
+
+There are no webhooks in the SDK, so detection is the app's job. The happy
+path is the client reporting its hash; the loop below is what catches the
+orders that path misses.
+
+```mermaid
+flowchart TD
+    subgraph happy[Normal path]
+        A[Diner pays in the app] --> B[Client gets the hash]
+        B --> C[POST /api/orders/id/confirm]
+    end
+
+    subgraph verify[Verification, always]
+        C --> V{Horizon says...}
+        V -->|any check fails| X[402 · stays unpaid]
+        V -->|all 5 pass| OK[Order marked paid<br/>hash stored, UNIQUE]
+    end
+
+    subgraph lost[Diner closed the tab]
+        L[Money is on the ledger<br/>order still pending]
+    end
+
+    subgraph recon[Reconciliation loop, every 8s]
+        R1[Board polls Horizon<br/>account payments + cursor] --> R2{Memo matches<br/>a pending order?}
+        R2 -->|yes, amount agrees| OK
+        R2 -->|no| R3[Advance cursor]
+        R1 --> R4[Pending over 30 min<br/>marked expired]
+    end
+
+    L -.rescued by.-> R1
+```
+
 ## The two sides
 
 ### Owner — `/admin`
