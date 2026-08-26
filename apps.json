@@ -59,9 +59,9 @@
     {
       "slug": "market-orders",
       "category": "community",
-      "issue": null,
+      "issue": "https://github.com/pollar-xyz/pollar-apps/issues/15",
       "deploy": null,
-      "author": null
+      "author": "JennyT3"
     },
     {
       "slug": "alcancia-goals",
