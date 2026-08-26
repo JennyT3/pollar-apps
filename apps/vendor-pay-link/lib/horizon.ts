@@ -1,7 +1,4 @@
-/**
- * Server-side verification of a claimed Stellar payment against Horizon testnet.
- * Never trust the buyer/client: destination, amount, and memo must match the sale.
- */
+import { isUsdcPayment } from "./usdc";
 
 const HORIZON =
   process.env.HORIZON_URL?.replace(/\/$/, "") ??
@@ -30,6 +27,7 @@ type HorizonOp = {
   amount?: string;
   asset_type?: string;
   asset_code?: string;
+  asset_issuer?: string;
 };
 
 function normalizeAmount(value: string): string {
@@ -101,6 +99,7 @@ export async function verifyPaymentOnHorizon(opts: {
   const payment = records.find((op) => {
     if (op.type !== "payment") return false;
     if (op.to !== opts.vendorAddress) return false;
+    if (!isUsdcPayment(op)) return false;
     if (normalizeAmount(op.amount ?? "") !== normalizeAmount(opts.amount)) {
       return false;
     }
@@ -111,7 +110,7 @@ export async function verifyPaymentOnHorizon(opts: {
     return {
       ok: false,
       error:
-        "El pago en Horizon no coincide (destino del vendedor y monto)",
+        "El pago en Horizon no coincide (USDC al vendedor, monto y memo)",
       code: "mismatch",
     };
   }
@@ -140,7 +139,11 @@ export async function inspectPaymentOnHorizon(hash: string): Promise<{
     `/transactions/${h}/operations?limit=50`
   );
   const payment = (ops?._embedded?.records ?? []).find(
-    (op) => op.type === "payment" && op.to && op.amount
+    (op) =>
+      op.type === "payment" &&
+      op.to &&
+      op.amount &&
+      isUsdcPayment(op)
   );
   return {
     memo: (tx.memo ?? "").trim() || null,

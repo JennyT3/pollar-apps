@@ -5,7 +5,7 @@ import { usePollar } from "@pollar/react";
 import { formatMoney } from "@/lib/format";
 
 /**
- * Saldo simple en USD (USDC por debajo). Sin XLM, sin swap, sin direcciones.
+ * Saldo simple en USDC. Sin XLM, sin swap, sin direcciones.
  */
 export function WalletBalancesMenu() {
   const {
@@ -77,7 +77,7 @@ export function WalletBalancesMenu() {
         ) : (
           <span className="truncate text-sm font-semibold tabular-nums">
             {formatMoney(usd?.balance ?? "0")}{" "}
-            <span className="text-xs font-medium text-muted">USD</span>
+            <span className="text-xs font-medium text-muted">USDC</span>
           </span>
         )}
         <svg
@@ -110,7 +110,7 @@ export function WalletBalancesMenu() {
             </p>
             <p className="mt-2 text-2xl font-bold tabular-nums">
               {formatMoney(usd?.balance ?? "0")}{" "}
-              <span className="text-base font-semibold text-muted">USD</span>
+              <span className="text-base font-semibold text-muted">USDC</span>
             </p>
           </div>
           <div className="border-t border-border p-3">

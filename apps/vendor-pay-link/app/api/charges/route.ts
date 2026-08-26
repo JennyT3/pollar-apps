@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { requireAddress } from "@/lib/require-session";
 import { createCharge, getVendorByAddress } from "@/lib/sales";
 
 export const runtime = "nodejs";
@@ -19,6 +20,12 @@ export async function POST(request: Request) {
   const vendorAddress = body.vendorAddress?.trim() ?? "";
   const amount = body.amount?.trim() ?? "";
   const note = body.note?.trim() || null;
+
+  if (!/^G[A-Z2-7]{55}$/.test(vendorAddress)) {
+    return NextResponse.json({ error: "Invalid address" }, { status: 400 });
+  }
+  const auth = await requireAddress(request, vendorAddress);
+  if (!auth.ok) return auth.response;
 
   if (!(await getVendorByAddress(vendorAddress))) {
     return NextResponse.json(

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
 import manifest from "@/pollar.manifest.json";
 import { LoginButton } from "@/components/LoginButton";
 import { BrandLogo } from "@/components/ui/BrandLogo";
@@ -13,6 +13,8 @@ import {
 } from "@/components/vendor/VendorScreens";
 import { usePaymentDetection } from "@/hooks/usePaymentDetection";
 import { usePollarAuth } from "@/hooks/usePollarAuth";
+import { usePollar } from "@pollar/react";
+import { pollarFetch } from "@/lib/pollar-fetch";
 import type { Vendor } from "@/lib/types";
 
 type Tab = "charge" | "sales" | "history";
@@ -20,15 +22,16 @@ type Tab = "charge" | "sales" | "history";
 const APP_NAME = manifest.name || "Puesto";
 
 function useIsClient() {
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-  return mounted;
+  return useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false
+  );
 }
 
 export default function Home() {
   const { user, isLoading, login, verified } = usePollarAuth();
+  const { getClient } = usePollar();
   const mounted = useIsClient();
   const [vendor, setVendor] = useState<Vendor | null>(null);
   const [vendorLoading, setVendorLoading] = useState(false);
@@ -55,7 +58,9 @@ export default function Home() {
     async function load() {
       setVendorLoading(true);
       try {
-        const res = await fetch(
+        const res = await pollarFetch(
+          getClient(),
+          address as string,
           `/api/vendor?address=${encodeURIComponent(address as string)}`
         );
         const data = (await res.json()) as { vendor: Vendor | null };
@@ -68,7 +73,7 @@ export default function Home() {
     return () => {
       cancelled = true;
     };
-  }, [mounted, user?.address]);
+  }, [mounted, user?.address, getClient]);
 
   const hero = (
     <div className="relative mx-auto flex w-full max-w-lg flex-1 flex-col items-center justify-center gap-6 px-5 py-12 text-center sm:gap-8 sm:px-6 sm:py-16">

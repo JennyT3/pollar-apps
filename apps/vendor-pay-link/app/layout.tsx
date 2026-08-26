@@ -16,7 +16,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Puesto — cobro QR con Pollar",
   description:
-    "Cobra con QR en tu puesto, carrito o feria. Sin tienda, sin papeles. Pagos en USD con Pollar.",
+    "Cobra con QR en tu puesto, carrito o feria. Sin tienda, sin papeles. Pagos en USDC con Pollar.",
 };
 
 export default function RootLayout({

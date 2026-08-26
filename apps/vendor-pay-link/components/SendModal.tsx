@@ -65,6 +65,10 @@ export function SendModal({
     amount !== "" && balance !== null && amountNumber > Number(balance);
 
   async function confirm() {
+    if (!payAsset) {
+      setError("Espera a que cargue el saldo USDC.");
+      return;
+    }
     setSending(true);
     setError(null);
     try {
@@ -223,9 +227,10 @@ export function SendModal({
           <Button
             onClick={() => void confirm()}
             loading={sending}
+            disabled={!payAsset}
             className="w-full py-3"
           >
-            {sending ? "Sending…" : "Confirm"}
+            {sending ? "Sending…" : !payAsset ? "Loading USDC…" : "Confirm"}
           </Button>
         </div>
       )}

@@ -4,11 +4,14 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { LoginButton } from "@/components/LoginButton";
 import { ReceivedPaymentsList } from "@/components/ReceivedPaymentsList";
+import { usePollar } from "@pollar/react";
 import { usePollarAuth } from "@/hooks/usePollarAuth";
+import { pollarFetch } from "@/lib/pollar-fetch";
 import type { Sale } from "@/lib/types";
 
 export default function HistoryPage() {
   const { user } = usePollarAuth();
+  const { getClient } = usePollar();
   const [sales, setSales] = useState<Sale[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -16,9 +19,15 @@ export default function HistoryPage() {
     if (!user) return;
     let cancelled = false;
     async function load() {
-      const res = await fetch(
+      const res = await pollarFetch(
+        getClient(),
+        user!.address,
         `/api/sales?address=${encodeURIComponent(user!.address)}&tzOffset=${new Date().getTimezoneOffset()}`
       );
+      if (!res.ok) {
+        if (!cancelled) setLoading(false);
+        return;
+      }
       const data = (await res.json()) as { sales: Sale[] };
       if (!cancelled) {
         setSales(data.sales.filter((s) => s.status === "paid"));
@@ -29,7 +38,7 @@ export default function HistoryPage() {
     return () => {
       cancelled = true;
     };
-  }, [user]);
+  }, [user, getClient]);
 
   if (!user) {
     return (

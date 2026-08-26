@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { requireSignedAddress } from "@/lib/require-session";
 import { confirmSale } from "@/lib/sales";
 
 export const runtime = "nodejs";
@@ -7,6 +8,8 @@ type Ctx = { params: Promise<{ id: string }> };
 
 /** Buyer (or detection poll) confirms a sale with its Stellar tx hash. */
 export async function POST(request: Request, ctx: Ctx) {
+  const auth = await requireSignedAddress(request);
+  if (!auth.ok) return auth.response;
   const { id } = await ctx.params;
   let body: { txHash?: string };
   try {

@@ -1,7 +1,9 @@
 "use client";
 
+import { useState } from "react";
 import { Modal } from "@/components/ui/Modal";
 import { usePollarAuth } from "@/hooks/usePollarAuth";
+import { middleTruncate } from "@/lib/format";
 
 export function AccountModal({
   open,
@@ -11,18 +13,40 @@ export function AccountModal({
   onClose: () => void;
 }) {
   const { user, logout } = usePollarAuth();
+  const [copied, setCopied] = useState(false);
 
   if (!user) return null;
+
+  async function copyAddress() {
+    if (!user) return;
+    await navigator.clipboard.writeText(user.address);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }
 
   return (
     <Modal open={open} onClose={onClose} title="Tu cuenta">
       <div className="flex flex-col gap-4">
-        <div className="rounded-xl border border-border bg-surface px-4 py-3.5">
-          <p className="text-xs text-muted">Sesión</p>
-          <p className="mt-0.5 truncate text-sm font-medium">
-            {user.profile?.mail ?? "Conectado con Pollar"}
-          </p>
+        <div className="flex flex-col divide-y divide-border rounded-xl border border-border bg-surface">
+          <div className="flex items-center justify-between gap-4 px-4 py-3.5">
+            <span className="text-sm text-muted">Email</span>
+            <span className="min-w-0 truncate text-sm font-medium">
+              {user.profile?.mail ?? "—"}
+            </span>
+          </div>
+          <div className="flex items-center justify-between gap-4 px-4 py-3.5">
+            <span className="text-sm text-muted">Wallet</span>
+            <button
+              type="button"
+              onClick={() => void copyAddress()}
+              title={user.address}
+              className="font-mono text-sm font-medium text-primary transition-colors hover:text-primary-hover"
+            >
+              {copied ? "Copiado ✓" : middleTruncate(user.address, 6, 6)}
+            </button>
+          </div>
         </div>
+
         <button
           onClick={() => {
             logout();

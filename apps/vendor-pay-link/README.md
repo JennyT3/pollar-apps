@@ -52,12 +52,13 @@ Prefill is done by loading vendor + sale from our API, then paying with the **te
 
 ## Incoming payment detection (no client webhooks)
 
-1. **Primary:** buyer `onSuccess` → `POST /api/sales/{id}/confirm` with `txHash`. The server checks Horizon testnet (destination = vendor, amount, memo `P-{saleId}`) before marking the sale paid.
-2. **Backup (polling):** while the vendor is logged in and `verified`, `usePaymentDetection` polls `fetchTxHistory` (~8s) and `POST /api/sales/match` with candidate hashes. The server ignores client amounts and verifies each hash on Horizon the same way.
+1. **Primary:** buyer `onSuccess` → `POST /api/sales/{id}/confirm` with `txHash`. The server checks Horizon (destination = vendor, **USDC** + Circle issuer, amount, memo `P-{saleId}`) before marking the sale paid.
+2. **Backup (polling):** while the vendor is logged in and `verified`, `usePaymentDetection` polls `fetchTxHistory` (~8s) and `POST /api/sales/match` with candidate hashes. The server ignores client amounts and verifies each hash on Horizon the same way (native XLM is rejected).
 
 ### Limits
 
-- Pollar history records expose `summary` + `hash`, **not** memo or counterparty. Confirmation never trusts the client hash blindly — Horizon must show a successful payment to the vendor for that amount with memo `P-{saleId}`.
+- Pollar history records expose `summary` + `hash`, **not** memo or counterparty. Confirmation never trusts the client hash blindly — Horizon must show a successful **USDC** payment to the vendor for that amount with memo `P-{saleId}`.
+- The pay button stays disabled until `useBalance` has loaded USDC (no native-XLM fallback).
 - If the buyer closes the tab before `onSuccess` and Horizon has not yet ingested the tx, the sale can stay `pending` until a later poll.
 - Polling requires the vendor session (history is the logged-in user).
 
@@ -68,11 +69,16 @@ Double-pay: `claim` before `runTx`, `release` on failure, confirm rejects a seco
 - **Vercel / production:** Neon Postgres (`DATABASE_URL`). Tables are created on first request.
 - **Local without Postgres:** `data/store.json` (gitignored). Same schema as the DB.
 
+## Vendor API auth
+
+The vendor `G…` address is public on-chain, so listing/renaming a puesto cannot be gated on that string alone. Pollar access tokens are DPoP-bound, so `POLLAR_SECRET_KEY` cannot introspect a Bearer token from the browser. Write endpoints (`POST /api/vendor`, `POST /api/charges`, `GET /api/sales`, `POST /api/sales/match`, claim/release/confirm) require a short-lived SEP-53 signature of the live Pollar session (`x-puesto-proof`). Public remain: stall/charge GET pages and `POST /api/sales` (buyer creating an open-amount sale).
+
 ## Stack
 
 - Next.js 16 App Router, React 19, TypeScript 5, Tailwind 4 (template)
 - `@pollar/core@^0.11.2`, `@pollar/react@^0.11.2` — same pins as `template/` (satisfies issue `^0.11.0`)
 - `@neondatabase/serverless` for durable sales on Vercel
+- `@stellar/stellar-base` to verify SEP-53 session proofs on the server
 - `qrcode.react` for QR images
 - Pollar auth, balance, session, payments: **not reimplemented**
 

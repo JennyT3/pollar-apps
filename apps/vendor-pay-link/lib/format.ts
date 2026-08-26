@@ -9,11 +9,10 @@ export function formatAmount(value: string | null): string {
   });
 }
 
-/** Show USDC as USD. Never surface XLM / ticker codes to the buyer. */
+/** Keep the on-chain asset code visible (USDC, XLM). */
 export function displayCurrency(code?: string | null): string {
-  if (!code || code === "native" || code === "XLM") return "USD";
-  if (code === "USDC" || code === "USD") return "USD";
-  return "USD";
+  if (!code || code === "native") return "XLM";
+  return code;
 }
 
 export function formatMoney(value: string | null): string {

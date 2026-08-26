@@ -1,8 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import { usePollar } from "@pollar/react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import { pollarFetch } from "@/lib/pollar-fetch";
 import type { Vendor } from "@/lib/types";
 
 export function VendorSetup({
@@ -12,6 +14,7 @@ export function VendorSetup({
   address: string;
   onReady: (vendor: Vendor) => void;
 }) {
+  const { getClient } = usePollar();
   const [name, setName] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -21,7 +24,7 @@ export function VendorSetup({
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch("/api/vendor", {
+      const res = await pollarFetch(getClient(), address, "/api/vendor", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ address, name }),

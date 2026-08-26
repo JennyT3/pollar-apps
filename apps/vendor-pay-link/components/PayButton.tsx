@@ -51,10 +51,18 @@ export function PayButton({
   const [state, setState] = useState<PayStep>({ step: "idle" });
 
   // When no asset is given, use the app's primary asset from the balance.
-  const payAsset: PaymentAsset = asset ?? paymentAssetFrom(appAsset);
+  const payAsset: PaymentAsset | null = asset ?? paymentAssetFrom(appAsset);
   const currency = currencyOf(payAsset);
+  const canPay = Boolean(
+    isAuthenticated &&
+      verified &&
+      payAsset &&
+      payAsset.type !== "native" &&
+      payAsset.code === "USDC"
+  );
 
   async function pay() {
+    if (!payAsset) return;
     setState({ step: "processing" });
     try {
       const result = await runTx("payment", {
@@ -122,12 +130,14 @@ export function PayButton({
     <div className="flex flex-col items-start gap-2">
       <Button
         onClick={() => setState({ step: "confirming" })}
-        disabled={!isAuthenticated || !verified}
+        disabled={!canPay}
         loading={state.step === "processing"}
       >
         {!isAuthenticated
           ? "Log in to pay"
-          : state.step === "processing"
+          : !payAsset
+            ? "Loading USDC…"
+            : state.step === "processing"
             ? "Processing…"
             : (label ?? (
                 <>

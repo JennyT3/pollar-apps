@@ -10,8 +10,11 @@ import { useAppOrigin } from "@/components/ChargePayButton";
 import { ReceivedPaymentsList } from "@/components/ReceivedPaymentsList";
 import type { Charge, Sale, Vendor } from "@/lib/types";
 import { formatMoney } from "@/lib/format";
+import { usePollar } from "@pollar/react";
+import { pollarFetch } from "@/lib/pollar-fetch";
 
 export function ChargeScreen({ vendor }: { vendor: Vendor }) {
+  const { getClient } = usePollar();
   const origin = useAppOrigin();
   const stallUrl = origin ? `${origin}/pay/s/${vendor.publicCode}` : "";
   const [amount, setAmount] = useState("");
@@ -30,7 +33,7 @@ export function ChargeScreen({ vendor }: { vendor: Vendor }) {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch("/api/charges", {
+      const res = await pollarFetch(getClient(), vendor.address, "/api/charges", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -109,7 +112,7 @@ export function ChargeScreen({ vendor }: { vendor: Vendor }) {
           </p>
         </div>
         <Input
-          label="Monto (USD)"
+          label="Monto (USDC)"
           inputMode="decimal"
           placeholder="0.00"
           value={amount}
@@ -147,7 +150,7 @@ export function ChargeScreen({ vendor }: { vendor: Vendor }) {
           <div className="flex flex-col items-center gap-4 py-2">
             <p className="text-3xl font-semibold tabular-nums">
               {formatMoney(created.charge.amount)}{" "}
-              <span className="text-lg font-normal text-muted">USD</span>
+              <span className="text-lg font-normal text-muted">USDC</span>
             </p>
             {created.charge.note && (
               <p className="text-center text-sm text-muted">
@@ -180,6 +183,7 @@ export function SalesTodayScreen({
   address: string;
   refreshKey: number;
 }) {
+  const { getClient } = usePollar();
   const [loading, setLoading] = useState(true);
   const [today, setToday] = useState<{
     count: number;
@@ -192,7 +196,9 @@ export function SalesTodayScreen({
     async function load() {
       setLoading(true);
       const tzOffset = new Date().getTimezoneOffset();
-      const res = await fetch(
+      const res = await pollarFetch(
+        getClient(),
+        address,
         `/api/sales?address=${encodeURIComponent(address)}&tzOffset=${tzOffset}`
       );
       if (!res.ok) {
@@ -213,7 +219,7 @@ export function SalesTodayScreen({
       cancelled = true;
       window.clearInterval(id);
     };
-  }, [address, refreshKey]);
+  }, [address, refreshKey, getClient]);
 
   return (
     <div className="flex flex-col gap-5">
@@ -232,7 +238,7 @@ export function SalesTodayScreen({
           </p>
           <p className="mt-1 text-3xl font-semibold tabular-nums">
             {loading ? "—" : formatMoney(today.total)}
-            <span className="ml-1 text-sm font-normal text-muted">USD</span>
+            <span className="ml-1 text-sm font-normal text-muted">USDC</span>
           </p>
         </div>
       </div>
@@ -264,13 +270,16 @@ export function PaymentsHistoryScreen({
   address: string;
   refreshKey: number;
 }) {
+  const { getClient } = usePollar();
   const [loading, setLoading] = useState(true);
   const [sales, setSales] = useState<Sale[]>([]);
 
   useEffect(() => {
     let cancelled = false;
     async function load() {
-      const res = await fetch(
+      const res = await pollarFetch(
+        getClient(),
+        address,
         `/api/sales?address=${encodeURIComponent(address)}&tzOffset=${new Date().getTimezoneOffset()}`
       );
       if (!res.ok) {
@@ -287,7 +296,7 @@ export function PaymentsHistoryScreen({
     return () => {
       cancelled = true;
     };
-  }, [address, refreshKey]);
+  }, [address, refreshKey, getClient]);
 
   return (
     <div className="flex flex-col gap-5">

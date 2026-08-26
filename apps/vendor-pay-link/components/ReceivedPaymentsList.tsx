@@ -25,7 +25,7 @@ export function ReceivedPaymentsList({
           <div className="flex items-baseline justify-between gap-3">
             <span className="text-lg font-semibold tabular-nums">
               {formatMoney(sale.amount)}{" "}
-              <span className="text-sm font-medium text-muted">USD</span>
+              <span className="text-sm font-medium text-muted">USDC</span>
             </span>
             <span className="text-xs text-muted">
               {sale.paidAt

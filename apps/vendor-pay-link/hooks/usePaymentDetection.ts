@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef } from "react";
 import { usePollar } from "@pollar/react";
 import { parseReceivedAmount } from "@/lib/parse-history";
+import { pollarFetch } from "@/lib/pollar-fetch";
 
 /**
  * Polls Pollar tx history and POSTs candidate incoming payments to
@@ -46,7 +47,7 @@ export function usePaymentDetection(
 
       if (incoming.length === 0) return;
 
-      const res = await fetch("/api/sales/match", {
+      const res = await pollarFetch(getClient(), address, "/api/sales/match", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ vendorAddress: address, incoming }),

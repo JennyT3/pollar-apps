@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { requireAddress } from "@/lib/require-session";
 import { matchIncomingPayments } from "@/lib/sales";
 
 export const runtime = "nodejs";
@@ -22,6 +23,8 @@ export async function POST(request: Request) {
   if (!/^G[A-Z2-7]{55}$/.test(vendorAddress)) {
     return NextResponse.json({ error: "Invalid address" }, { status: 400 });
   }
+  const auth = await requireAddress(request, vendorAddress);
+  if (!auth.ok) return auth.response;
   const incoming = Array.isArray(body.incoming) ? body.incoming : [];
   const matched = await matchIncomingPayments(vendorAddress, incoming);
   return NextResponse.json({ matched });

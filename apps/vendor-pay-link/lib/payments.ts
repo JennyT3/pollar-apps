@@ -11,26 +11,27 @@ export type PaymentResult = Extract<
 >;
 
 /**
- * The asset a payment should use: the app's primary asset from useBalance(),
- * falling back to native XLM while the balance hasn't loaded yet.
+ * The asset a payment should use: USDC from useBalance().
+ * Returns null until that balance is loaded (never falls back to native XLM).
  */
 export function paymentAssetFrom(
   record: WalletBalanceRecord | null
-): PaymentAsset {
+): PaymentAsset | null {
   if (
     record &&
     (record.type === "credit_alphanum4" || record.type === "credit_alphanum12") &&
+    record.code === "USDC" &&
     record.issuer
   ) {
     return { type: record.type, code: record.code, issuer: record.issuer };
   }
-  return { type: "native" };
+  return null;
 }
 
-export function currencyOf(asset: PaymentAsset): string {
-  if (asset.type === "native") return "USD";
-  if (asset.code === "USDC" || asset.code === "USD") return "USD";
-  return "USD";
+export function currencyOf(asset: PaymentAsset | null): string {
+  if (!asset) return "USDC";
+  if (asset.type === "native") return "XLM";
+  return asset.code;
 }
 
 /** Loose G-address sanity check; the server does the real validation. */

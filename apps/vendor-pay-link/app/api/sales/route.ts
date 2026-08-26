@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { requireAddress } from "@/lib/require-session";
 import {
   createStallSale,
   getVendorByAddress,
@@ -16,6 +17,8 @@ export async function GET(request: Request) {
   if (!/^G[A-Z2-7]{55}$/.test(address)) {
     return NextResponse.json({ error: "Invalid address" }, { status: 400 });
   }
+  const auth = await requireAddress(request, address);
+  if (!auth.ok) return auth.response;
   const sales = await listSalesForVendor(address);
   const today = await todaysPaidSales(
     address,

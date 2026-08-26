@@ -102,13 +102,13 @@ export function StallPayPage({ code }: { code: string }) {
         <div className="rounded-2xl border border-success-border bg-success-light px-5 py-6 text-center">
           <p className="text-lg font-semibold text-success">¡Pago enviado!</p>
           <p className="mt-1 text-sm text-muted">
-            {formatMoney(sale?.amount ?? amount)} USD a {vendor.name}
+            {formatMoney(sale?.amount ?? amount)} USDC a {vendor.name}
           </p>
         </div>
       ) : !sale ? (
         <div className="flex flex-col gap-4">
           <Input
-            label="Monto (USD)"
+            label="Monto (USDC)"
             inputMode="decimal"
             placeholder="0.00"
             value={amount}
@@ -144,7 +144,7 @@ export function StallPayPage({ code }: { code: string }) {
             <p className="text-sm text-muted">Vas a pagar</p>
             <p className="mt-1 text-4xl font-semibold tabular-nums">
               {formatMoney(sale.amount)}{" "}
-              <span className="text-lg font-normal text-muted">USD</span>
+              <span className="text-lg font-normal text-muted">USDC</span>
             </p>
             {sale.note && (
               <p className="mt-2 text-sm text-muted">{sale.note}</p>

@@ -4,7 +4,9 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { QrCode } from "@/components/QrCode";
 import { useAppOrigin } from "@/components/ChargePayButton";
+import { usePollar } from "@pollar/react";
 import { usePollarAuth } from "@/hooks/usePollarAuth";
+import { pollarFetch } from "@/lib/pollar-fetch";
 import type { Vendor } from "@/lib/types";
 
 /**
@@ -13,15 +15,20 @@ import type { Vendor } from "@/lib/types";
  */
 export default function PrintPage() {
   const { user } = usePollarAuth();
+  const { getClient } = usePollar();
   const origin = useAppOrigin();
   const [vendor, setVendor] = useState<Vendor | null>(null);
 
   useEffect(() => {
     if (!user) return;
-    void fetch(`/api/vendor?address=${encodeURIComponent(user.address)}`)
+    void pollarFetch(
+      getClient(),
+      user.address,
+      `/api/vendor?address=${encodeURIComponent(user.address)}`
+    )
       .then((r) => r.json())
       .then((d: { vendor: Vendor | null }) => setVendor(d.vendor));
-  }, [user]);
+  }, [user, getClient]);
 
   const stallUrl =
     origin && vendor ? `${origin}/pay/s/${vendor.publicCode}` : "";

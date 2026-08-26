@@ -19,7 +19,7 @@ import type { Charge, Sale, Vendor } from "./types";
 
 const CLAIM_TTL_MS = 5 * 60 * 1000;
 
-function usePg(): boolean {
+function shouldUsePg(): boolean {
   if (process.env.VERCEL && !hasDatabaseUrl()) {
     throw new Error(
       "DATABASE_URL is required on Vercel (ephemeral filesystem cannot store sales)."
@@ -34,7 +34,7 @@ function claimExpired(sale: Sale): boolean {
 }
 
 export async function getVendorByAddress(address: string): Promise<Vendor | null> {
-  if (!usePg()) return readStore().vendors[address] ?? null;
+  if (!shouldUsePg()) return readStore().vendors[address] ?? null;
   await ensureSchema();
   const rows = await getSql()`
     SELECT address, name, public_code, created_at
@@ -44,7 +44,7 @@ export async function getVendorByAddress(address: string): Promise<Vendor | null
 }
 
 export async function getVendorByCode(code: string): Promise<Vendor | null> {
-  if (!usePg()) {
+  if (!shouldUsePg()) {
     return (
       Object.values(readStore().vendors).find(
         (v) => v.publicCode.toLowerCase() === code.toLowerCase()
@@ -61,7 +61,7 @@ export async function getVendorByCode(code: string): Promise<Vendor | null> {
 
 export async function upsertVendor(address: string, name: string): Promise<Vendor> {
   const trimmed = name.trim();
-  if (!usePg()) {
+  if (!shouldUsePg()) {
     let vendor: Vendor | null = null;
     updateStore((store) => {
       const existing = store.vendors[address];
@@ -131,7 +131,7 @@ export async function createCharge(
     saleId,
     createdAt: now,
   };
-  if (!usePg()) {
+  if (!shouldUsePg()) {
     updateStore((store) => {
       store.sales[saleId] = sale;
       store.charges[chargeId] = charge;
@@ -175,7 +175,7 @@ export async function createStallSale(
     claimedAt: null,
     createdAt: new Date().toISOString(),
   };
-  if (!usePg()) {
+  if (!shouldUsePg()) {
     updateStore((store) => {
       store.sales[saleId] = sale;
     });
@@ -194,7 +194,7 @@ export async function createStallSale(
 }
 
 export async function getCharge(id: string): Promise<Charge | null> {
-  if (!usePg()) return readStore().charges[id] ?? null;
+  if (!shouldUsePg()) return readStore().charges[id] ?? null;
   await ensureSchema();
   const rows = (await getSql()`
     SELECT id, vendor_address, amount, note, sale_id, created_at
@@ -203,7 +203,7 @@ export async function getCharge(id: string): Promise<Charge | null> {
 }
 
 export async function getSale(id: string): Promise<Sale | null> {
-  if (!usePg()) return readStore().sales[id] ?? null;
+  if (!shouldUsePg()) return readStore().sales[id] ?? null;
   await ensureSchema();
   const rows = (await getSql()`
     SELECT id, vendor_address, amount, note, kind, charge_id, status, memo,
@@ -213,7 +213,7 @@ export async function getSale(id: string): Promise<Sale | null> {
 }
 
 export async function listSalesForVendor(address: string): Promise<Sale[]> {
-  if (!usePg()) {
+  if (!shouldUsePg()) {
     return Object.values(readStore().sales)
       .filter((s) => s.vendorAddress === address)
       .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
@@ -235,7 +235,7 @@ export async function listPendingSales(address: string): Promise<Sale[]> {
 export async function claimSale(
   saleId: string
 ): Promise<{ ok: true; sale: Sale } | { ok: false; error: string; code: string }> {
-  if (!usePg()) {
+  if (!shouldUsePg()) {
     let result: { ok: true; sale: Sale } | { ok: false; error: string; code: string } =
       { ok: false, error: "Cobro no encontrado", code: "not_found" };
     updateStore((store) => {
@@ -292,7 +292,7 @@ export async function claimSale(
 }
 
 export async function releaseSale(saleId: string): Promise<void> {
-  if (!usePg()) {
+  if (!shouldUsePg()) {
     updateStore((store) => {
       const sale = store.sales[saleId];
       if (!sale || sale.status !== "paying") return;
@@ -308,7 +308,7 @@ export async function releaseSale(saleId: string): Promise<void> {
 }
 
 async function hashAlreadyUsed(txHash: string, exceptSaleId: string): Promise<boolean> {
-  if (!usePg()) {
+  if (!shouldUsePg()) {
     return Object.values(readStore().sales).some(
       (s) => s.id !== exceptSaleId && s.txHash === txHash
     );
@@ -323,7 +323,7 @@ async function hashAlreadyUsed(txHash: string, exceptSaleId: string): Promise<bo
 
 async function markPaid(saleId: string, txHash: string): Promise<Sale | null> {
   const paidAt = new Date().toISOString();
-  if (!usePg()) {
+  if (!shouldUsePg()) {
     let paid: Sale | null = null;
     updateStore((store) => {
       const sale = store.sales[saleId];
