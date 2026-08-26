@@ -172,7 +172,7 @@ function ParticipantView({
           <p className="break-all font-mono text-xs">{result.hash}</p>
           <a
             className="text-primary underline"
-            href={`https://testnet.stellar.expert/tx/${result.hash}`}
+            href={`https://stellar.expert/explorer/testnet/tx/${result.hash}`}
             target="_blank"
             rel="noreferrer"
           >

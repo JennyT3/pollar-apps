@@ -246,7 +246,7 @@ function ParticipantRow({
           {participant.txHash && (
             <a
               className="text-primary underline"
-              href={`https://testnet.stellar.expert/tx/${participant.txHash}`}
+              href={`https://stellar.expert/explorer/testnet/tx/${participant.txHash}`}
               target="_blank"
               rel="noreferrer"
             >
