@@ -5,6 +5,7 @@ import Link from "next/link";
 import manifest from "@/pollar.manifest.json";
 import { BalanceCard } from "@/components/BalanceCard";
 import { LoginButton } from "@/components/LoginButton";
+import { ScanQRModal } from "@/components/ScanQRModal";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -18,6 +19,7 @@ const APP_NAME = manifest.name || "My Pollar App";
 export default function Home() {
   const { user } = usePollarAuth();
   const [splits, setSplits] = useState<Split[] | null>(null);
+  const [scanOpen, setScanOpen] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -66,9 +68,25 @@ export default function Home() {
 
       <BalanceCard />
 
-      <Link href="/split/new">
-        <Button className="w-full py-3">+ New split</Button>
-      </Link>
+      <div className="grid grid-cols-2 gap-3">
+        <Link href="/split/new">
+          <Button className="w-full py-3">+ New split</Button>
+        </Link>
+        <Button variant="secondary" onClick={() => setScanOpen(true)} className="w-full py-3">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path
+              d="M4 8V5a1 1 0 0 1 1-1h3M20 8V5a1 1 0 0 0-1-1h-3M4 16v3a1 1 0 0 0 1 1h3M20 16v3a1 1 0 0 1-1 1h-3M4 12h16"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+          Scan QR
+        </Button>
+      </div>
+
+      <ScanQRModal open={scanOpen} onClose={() => setScanOpen(false)} />
 
       <div className="flex flex-col gap-3">
         <span className="text-sm font-semibold text-muted">Your splits</span>
