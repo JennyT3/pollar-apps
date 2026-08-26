@@ -126,7 +126,7 @@ export function ChargePayButton({
         <p className="text-sm text-muted">
           ¿Pagar{" "}
           <span className="font-semibold text-foreground">
-            {formatMoney(amount)} USDC
+            {formatMoney(amount)}
           </span>
           ?
         </p>
@@ -150,7 +150,7 @@ export function ChargePayButton({
     return (
       <div className="w-full rounded-2xl border border-success-border bg-success-light px-4 py-4 text-center">
         <p className="text-sm font-medium text-success">
-          Listo. Pagaste {formatMoney(amount)} USDC
+          Listo. Pagaste {formatMoney(amount)}
         </p>
       </div>
     );
@@ -167,10 +167,10 @@ export function ChargePayButton({
         {!isAuthenticated
           ? "Inicia sesión para pagar"
           : !usdcReady
-            ? "Cargando USDC…"
+            ? "Cargando saldo…"
             : step.step === "processing"
               ? "Procesando…"
-              : (label ?? `Pagar ${formatMoney(amount)} USDC`)}
+              : (label ?? `Pagar ${formatMoney(amount)}`)}
       </Button>
       {step.step === "error" && (
         <p className="rounded-xl border border-error-border bg-error-light px-3 py-2 text-sm text-error">

@@ -80,8 +80,7 @@ export function ChargePayPage({ id }: { id: string }) {
       <div className="rounded-2xl border border-border bg-surface px-5 py-6 text-center">
         <p className="text-sm text-muted">Monto</p>
         <p className="mt-1 text-4xl font-semibold tabular-nums">
-          {formatMoney(charge.amount)}{" "}
-          <span className="text-lg font-normal text-muted">USDC</span>
+          {formatMoney(charge.amount)}
         </p>
         {charge.note && (
           <p className="mt-3 text-sm text-muted">{charge.note}</p>
