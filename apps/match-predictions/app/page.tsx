@@ -34,7 +34,7 @@ interface PollaSummary {
  */
 export default function Home() {
   const { user, isLoading } = usePollarAuth();
-  const { ready, ensure, error: sessionError } = useAppSession();
+  const { ready, busy: signing, ensure, error: sessionError } = useAppSession();
   // The SDK's own send and receive screens. Topping up a wallet is Pollar's
   // job, not this app's, so this opens what the SDK already ships instead of
   // building a second money-moving flow.
@@ -52,25 +52,32 @@ export default function Home() {
     setPollas(null);
   }
 
-  // Listing your pollas needs a proved account, so ask for the signature once
-  // on arrival: on the custodial wallets most players have it is a round trip
-  // with nothing to confirm, and it saves a prompt mid-payment later.
+  // Only load the list when this browser already carries a proof from an
+  // earlier visit. A fresh login gets a button instead: signing in to Pollar
+  // must not immediately fire an authenticated request at a session the SDK is
+  // still confirming with its server.
   useEffect(() => {
-    if (!user) return;
+    if (!user || !ready) return;
     let cancelled = false;
     void (async () => {
-      try {
-        await ensure();
-        const res = await api<{ pollas: PollaSummary[] }>("/api/pollas");
-        if (!cancelled) setPollas(res.pollas);
-      } catch {
-        if (!cancelled) setPollas([]);
-      }
+      const res = await api<{ pollas: PollaSummary[] }>("/api/pollas").catch(
+        () => null
+      );
+      if (!cancelled) setPollas(res?.pollas ?? []);
     })();
     return () => {
       cancelled = true;
     };
-  }, [user, ensure]);
+  }, [user, ready]);
+
+  async function loadPollas() {
+    try {
+      await ensure();
+      setPollas((await api<{ pollas: PollaSummary[] }>("/api/pollas")).pollas);
+    } catch {
+      // useAppSession already surfaces why; the list simply stays hidden.
+    }
+  }
 
   function open() {
     const clean = code.trim().toUpperCase();
@@ -137,11 +144,20 @@ export default function Home() {
 
             <section className="flex flex-col gap-3">
               <h2 className="text-lg font-bold tracking-tight">Tus pollas</h2>
-              {pollas === null && !ready ? (
-                <div className="flex justify-center py-6">
-                  <Spinner size={24} />
+              {pollas === null ? (
+                <div className="flex flex-col items-center gap-3 rounded-2xl border border-border px-4 py-8 text-center">
+                  <p className="text-sm text-muted">
+                    Verificá tu cuenta para ver las pollas que organizás o jugás.
+                  </p>
+                  <Button
+                    variant="secondary"
+                    onClick={() => void loadPollas()}
+                    loading={signing}
+                  >
+                    Ver mis pollas
+                  </Button>
                 </div>
-              ) : pollas && pollas.length > 0 ? (
+              ) : pollas.length > 0 ? (
                 <ul className="flex flex-col divide-y divide-border overflow-hidden rounded-2xl border border-border">
                   {pollas.map((polla) => (
                     <li key={polla.code}>

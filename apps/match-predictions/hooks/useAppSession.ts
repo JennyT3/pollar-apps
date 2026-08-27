@@ -17,6 +17,11 @@ import { usePollarAuth } from "@/hooks/usePollarAuth";
  * It is asked for lazily, right before the first write, so browsing a polla
  * never interrupts anyone with a signature prompt. On the custodial wallets
  * most players have, signing is a round trip with nothing to confirm.
+ *
+ * It also waits for `verified`. A session restored from storage, or one seconds
+ * old, is optimistic until the SDK revalidates it with the server, and firing an
+ * authenticated request at it before then earns a 401 mid-refresh. The
+ * template's own `useBalance` gates on the same flag for the same reason.
  */
 export function useAppSession(): {
   /** The address this browser has proved, or null. */
@@ -29,7 +34,7 @@ export function useAppSession(): {
   /** Proves the account if needed and returns the address. Throws on failure. */
   ensure: () => Promise<string>;
 } {
-  const { user } = usePollarAuth();
+  const { user, verified } = usePollarAuth();
   const { getClient } = usePollar();
   const [address, setAddress] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -57,6 +62,11 @@ export function useAppSession(): {
   const ensure = useCallback(async (): Promise<string> => {
     if (!user) throw new Error("Iniciá sesión con Pollar primero.");
     if (address === user.address) return address;
+    if (!verified) {
+      throw new Error(
+        "Tu sesión se está confirmando. Esperá un segundo y volvé a intentar."
+      );
+    }
     if (inflight.current) return inflight.current;
 
     const run = (async () => {
@@ -99,7 +109,7 @@ export function useAppSession(): {
 
     inflight.current = run;
     return run;
-  }, [address, getClient, user]);
+  }, [address, getClient, user, verified]);
 
   // Logging out of Pollar, or switching accounts, drops the proof with it.
   useEffect(() => {
