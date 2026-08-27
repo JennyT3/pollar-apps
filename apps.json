@@ -83,6 +83,13 @@
       "issue": null,
       "deploy": null,
       "author": null
+    },
+    {
+      "slug": "bolivia-ghana-corridor",
+      "category": "commerce",
+      "issue": "https://github.com/pollar-xyz/pollar-apps/issues/17",
+      "deploy": null,
+      "author": "PatrickKish1"
     }
   ]
 }
