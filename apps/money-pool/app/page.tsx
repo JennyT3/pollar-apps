@@ -1,24 +1,14 @@
 "use client";
 
-import { useState } from "react";
-import manifest from "@/pollar.manifest.json";
-import { BalanceCard } from "@/components/BalanceCard";
+import Link from "next/link";
 import { LoginButton } from "@/components/LoginButton";
-import { ReceiveModal } from "@/components/ReceiveModal";
-import { SendModal } from "@/components/SendModal";
+import { BalanceCard } from "@/components/BalanceCard";
 import { PollarLogo } from "@/components/ui/PollarLogo";
 import { usePollarAuth } from "@/hooks/usePollarAuth";
+import { BottomNav } from "@/components/BottomNav";
 
-const APP_NAME = manifest.name || "My Pollar App";
-
-/**
- * Wallet-style demo of everything the template ships with: auth, balance,
- * and the send/receive flows. Replace this page with your app's screens.
- */
 export default function Home() {
   const { user } = usePollarAuth();
-  const [sendOpen, setSendOpen] = useState(false);
-  const [receiveOpen, setReceiveOpen] = useState(false);
 
   if (!user) {
     return (
@@ -26,12 +16,11 @@ export default function Home() {
         <div className="flex flex-col items-center gap-5 text-center">
           <PollarLogo size={104} />
           <h1 className="text-4xl font-extrabold leading-tight tracking-tight sm:text-5xl">
-            {APP_NAME}
-            <span className="block text-primary">pay with Pollar</span>
+            Money Pool
+            <span className="block text-primary">Colecta grupal</span>
           </h1>
           <p className="max-w-sm text-lg leading-8 text-muted">
-            Log in to get a wallet and start paying inside this app. No
-            crypto knowledge needed.
+            Crea una colecta, comparte el código QR y recibe aportes directos en tu cuenta de Pollar. Sin custodia.
           </p>
         </div>
         <LoginButton />
@@ -40,13 +29,12 @@ export default function Home() {
   }
 
   return (
-    <main className="mx-auto flex w-full max-w-md flex-1 flex-col gap-4 px-4 py-6 lg:max-w-lg lg:py-10">
-      <header className="flex items-center justify-between gap-3 py-2">
+    <main className="mx-auto flex w-full max-w-md flex-1 flex-col gap-6 px-4 py-8 pb-24 lg:max-w-lg lg:py-12 lg:pb-28">
+      <header className="flex items-center justify-between gap-3 pb-4">
         <div className="flex min-w-0 items-center gap-2.5">
           <PollarLogo size={30} />
-          {/* App name stays off phones; the logo carries the brand there. */}
           <h1 className="hidden min-w-0 truncate text-xl font-bold tracking-tight sm:block">
-            {APP_NAME}
+            Money Pool
           </h1>
         </div>
         <LoginButton />
@@ -54,34 +42,27 @@ export default function Home() {
 
       <BalanceCard />
 
-      <div className="grid grid-cols-2 gap-3">
-        <button
-          onClick={() => setSendOpen(true)}
-          className="flex h-14 items-center justify-center gap-2 rounded-2xl bg-primary text-base font-semibold text-primary-foreground shadow-sm transition-all duration-150 hover:bg-primary-hover active:scale-[0.97]"
-        >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <path d="M12 19V5m0 0l-6 6m6-6l6 6" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+      <div className="flex flex-col items-center justify-center gap-6 rounded-3xl border border-border bg-card p-8 text-center shadow-sm">
+        <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary-light text-primary">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M12 4v16m8-8H4" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
-          Send
-        </button>
-        <button
-          onClick={() => setReceiveOpen(true)}
-          className="flex h-14 items-center justify-center gap-2 rounded-2xl border border-primary/30 bg-background text-base font-semibold text-primary shadow-sm transition-all duration-150 hover:border-primary/50 hover:bg-primary-light active:scale-[0.97]"
+        </div>
+        <div className="space-y-2">
+          <h2 className="text-2xl font-bold text-foreground">Crear un pool</h2>
+          <p className="text-muted text-sm leading-relaxed max-w-[250px] mx-auto">
+            Inicia una nueva colecta grupal para tu próximo evento, regalo o meta.
+          </p>
+        </div>
+        <Link
+          href="/pool/new"
+          className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-primary px-6 text-base font-semibold text-primary-foreground shadow-sm transition-all duration-150 hover:bg-primary-hover active:scale-[0.97]"
         >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <path d="M12 5v14m0 0l6-6m-6 6l-6-6" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-          Receive
-        </button>
+          Comenzar
+        </Link>
       </div>
 
-      <SendModal open={sendOpen} onClose={() => setSendOpen(false)} />
-      <ReceiveModal open={receiveOpen} onClose={() => setReceiveOpen(false)} />
-
-      <p className="mt-auto pt-4 text-center text-xs text-muted-light">
-        Demo page. Build your app starting from{" "}
-        <code className="font-mono">app/page.tsx</code>
-      </p>
+      <BottomNav />
     </main>
   );
 }

@@ -42,7 +42,7 @@ export default function NewPoolPage() {
     try {
       const res = await fetch('/api/pools', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'x-app-request': 'true' },
         body: JSON.stringify({
           name,
           description,
@@ -88,7 +88,7 @@ export default function NewPoolPage() {
               id="description"
               name="description"
               placeholder="What is this pool for?"
-              className="flex min-h-[80px] w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-50"
+              className="flex min-h-20 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-50"
             />
           </div>
           <div>

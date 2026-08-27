@@ -3,9 +3,8 @@ import { pools, contributions, poolStatusEnum, contributionStatusEnum } from '..
 
 describe('Database Schema', () => {
   it('pools table has correct numeric types and enums', () => {
-    // We check that the builder recorded the types appropriately
     expect(pools.id.dataType).toBe('string');
-    expect(pools.goalAmount.dataType).toBe('string'); // numeric translates to string in Drizzle PG by default
+    expect(pools.goalAmount.dataType).toBe('string');
     expect(poolStatusEnum.enumValues).toEqual(['open', 'closed']);
   });
 

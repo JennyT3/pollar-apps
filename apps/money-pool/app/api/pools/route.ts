@@ -2,6 +2,10 @@ import { NextResponse } from 'next/server';
 import { createPool } from '../../../lib/pools';
 
 export async function POST(request: Request) {
+  if (request.headers.get('x-app-request') !== 'true') {
+    return NextResponse.json({ error: 'Unauthorized request' }, { status: 401 });
+  }
+
   try {
     const body = await request.json();
     const { name, description, goalAmount, deadline, organizerAddress, organizerUserId } = body;

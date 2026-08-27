@@ -1,4 +1,4 @@
-import { eq, sum } from 'drizzle-orm';
+import { eq, and, sum, desc, inArray } from 'drizzle-orm';
 import { db } from '../db/client';
 import { pools, contributions } from '../db/schema';
 import { nanoid } from 'nanoid';
@@ -36,6 +36,7 @@ export async function getPool(id: string) {
 export type PoolWithTotal = Pool & {
   total: string;
   percentage: number;
+  contributions: typeof contributions.$inferSelect[];
 };
 
 export async function getPoolWithTotal(id: string): Promise<PoolWithTotal | null> {
@@ -45,7 +46,12 @@ export async function getPoolWithTotal(id: string): Promise<PoolWithTotal | null
   const [{ totalAmount }] = await db
     .select({ totalAmount: sum(contributions.amount) })
     .from(contributions)
-    .where(eq(contributions.poolId, id));
+    .where(
+      and(
+        eq(contributions.poolId, id),
+        eq(contributions.status, 'confirmed')
+      )
+    );
 
   const totalStr = (totalAmount as string | null) || '0';
   let percentage = 0;
@@ -56,9 +62,70 @@ export async function getPoolWithTotal(id: string): Promise<PoolWithTotal | null
     percentage = Math.min(100, Math.round((total / goal) * 100));
   }
 
+  const poolContributions = await db
+    .select()
+    .from(contributions)
+    .where(
+      and(
+        eq(contributions.poolId, id),
+        eq(contributions.status, 'confirmed')
+      )
+    )
+    .orderBy(desc(contributions.createdAt));
+
   return {
     ...pool,
     total: totalStr,
     percentage,
+    contributions: poolContributions,
   };
+}
+
+export async function updatePoolStatus(id: string, status: 'open' | 'closed') {
+  const [updatedPool] = await db
+    .update(pools)
+    .set({ status })
+    .where(eq(pools.id, id))
+    .returning();
+  return updatedPool || null;
+}
+
+export async function getUserOrganizedPools(address: string): Promise<PoolWithTotal[]> {
+  const userPools = await db
+    .select()
+    .from(pools)
+    .where(eq(pools.organizerUserId, address))
+    .orderBy(desc(pools.createdAt));
+
+  const enriched = await Promise.all(
+    userPools.map((p) => getPoolWithTotal(p.id))
+  );
+  return enriched.filter((p): p is PoolWithTotal => p !== null);
+}
+
+export async function getUserContributedPools(address: string): Promise<PoolWithTotal[]> {
+  const userContributions = await db
+    .select({ poolId: contributions.poolId })
+    .from(contributions)
+    .where(
+      and(
+        eq(contributions.contributorAddress, address),
+        eq(contributions.status, 'confirmed')
+      )
+    );
+
+  if (userContributions.length === 0) return [];
+
+  const poolIds = [...new Set(userContributions.map((c) => c.poolId))];
+
+  const contributedPools = await db
+    .select()
+    .from(pools)
+    .where(inArray(pools.id, poolIds))
+    .orderBy(desc(pools.createdAt));
+
+  const enriched = await Promise.all(
+    contributedPools.map((p) => getPoolWithTotal(p.id))
+  );
+  return enriched.filter((p): p is PoolWithTotal => p !== null);
 }

@@ -35,7 +35,7 @@ export function ReceiveModal({
           {user.address}
         </p>
         <Button onClick={() => void copyAddress()} className="w-full py-3">
-          {copied ? "Copied ✓" : "Copy address"}
+          {copied ? "Copied" : "Copy address"}
         </Button>
       </div>
     </Modal>

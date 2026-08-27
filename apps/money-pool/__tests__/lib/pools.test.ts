@@ -1,6 +1,5 @@
 import { vi, describe, it, expect } from 'vitest';
 import { createPool, getPool } from '../../lib/pools';
-import { db } from '../../db/client';
 
 vi.mock('../../db/client', () => {
   const dbMock = {

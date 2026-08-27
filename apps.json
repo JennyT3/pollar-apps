@@ -17,9 +17,9 @@
     {
       "slug": "money-pool",
       "category": "savings",
-      "issue": null,
-      "deploy": null,
-      "author": null
+      "issue": "https://github.com/pollar-xyz/pollar-apps/issues/7",
+      "deploy": "https://money-pool-tau.vercel.app",
+      "author": "moises-cisneros"
     },
     {
       "slug": "vendor-pay-link",

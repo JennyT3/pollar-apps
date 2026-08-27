@@ -1,8 +1,8 @@
 {
-  "name": "",
-  "slug": "",
-  "description": "",
-  "category": "",
+  "name": "Money Pool",
+  "slug": "money-pool",
+  "description": "Collect in groups with a visible goal and contributions via QR code.",
+  "category": "savings",
   "icon": "/icon.png",
-  "url": ""
+  "url": "https://money-pool-tau.vercel.app"
 }

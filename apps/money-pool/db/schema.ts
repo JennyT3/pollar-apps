@@ -4,7 +4,7 @@ export const poolStatusEnum = pgEnum('pool_status', ['open', 'closed']);
 export const contributionStatusEnum = pgEnum('contribution_status', ['pending', 'confirmed']);
 
 export const pools = pgTable('pools', {
-  id: text('id').primaryKey(), // nanoid
+  id: text('id').primaryKey(),
   name: text('name').notNull(),
   description: text('description'),
   goalAmount: numeric('goal_amount', { precision: 18, scale: 7 }).notNull(),

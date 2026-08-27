@@ -105,7 +105,7 @@ export function PayButton({
     return (
       <div className="flex items-center gap-3 rounded-2xl border border-success-border bg-success-light px-4 py-3">
         <span className="text-sm font-medium text-success">
-          ✓ Paid <span className="font-mono">{amount} {currency}</span>
+          Paid <span className="font-mono">{amount} {currency}</span>
         </span>
         <Button
           variant="ghost"
