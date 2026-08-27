@@ -9,7 +9,8 @@ import { BalanceCard } from "@/components/BalanceCard";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { PollarLogo } from "@/components/ui/PollarLogo";
-import { paymentAssetFrom, currencyOf } from "@/lib/payments";
+import { usdcPaymentAsset, currencyOf } from "@/lib/payments";
+import { QRCodeSVG } from "qrcode.react";
 
 interface Stall {
   id: string;
@@ -29,8 +30,8 @@ export default function StallPage({ params }: { params: Promise<{ id: string }> 
   const { id } = use(params);
   const { user } = usePollarAuth();
   const { runTx } = usePollar();
-  const { asset } = useBalance();
-  const payAsset = paymentAssetFrom(asset);
+  const { assets } = useBalance();
+  const payAsset = usdcPaymentAsset(assets);
   const currency = currencyOf(payAsset);
 
   const [stall, setStall] = useState<Stall | null>(null);
@@ -86,12 +87,7 @@ export default function StallPage({ params }: { params: Promise<{ id: string }> 
     setStep("paying");
     setErrMsg(null);
 
-    // Short memo: O + 4 char stall prefix + 6 char timestamp = 11 chars max
-    const ts = Date.now().toString(36).slice(-6);
-    const memo = `O${stall.id.slice(0, 4)}${ts}`;
-
     try {
-      // 1. Create PENDING order (reserves stock server-side)
       const orderRes = await fetch("/api/order", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -100,12 +96,8 @@ export default function StallPage({ params }: { params: Promise<{ id: string }> 
           customerAddress: user.address,
           items: cart.map((c) => ({
             menuItemId: c.menuItemId,
-            name: c.name,
-            price: c.price,
             quantity: c.qty,
           })),
-          total,
-          memo,
         }),
       });
 
@@ -117,31 +109,24 @@ export default function StallPage({ params }: { params: Promise<{ id: string }> 
       }
 
       const order = await orderRes.json();
+      const memo = order.memo;
 
-      // 2. Pay via Pollar SDK
       const res = await runTx(
         "payment",
         {
           destination: stall.ownerAddress,
-          amount: total.toString(),
+          amount: order.total.toString(),
           asset: payAsset,
         },
         { memo: { type: "text", value: memo } }
       );
 
       if (res.status === "error") {
-        // Payment failed — restore stock by deleting the pending order
-        await fetch("/api/order/status", {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ id: order.id, status: "cancelled" }),
-        });
         setErrMsg(res.message ?? res.details ?? "Payment failed");
         setStep("error");
         return;
       }
 
-      // 3. Mark order as PAID with tx hash
       await fetch("/api/order/status", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -305,11 +290,14 @@ export default function StallPage({ params }: { params: Promise<{ id: string }> 
           {pickupCode && (
             <Card className="w-full p-4 text-center">
               <p className="text-sm text-muted">Tu codigo de pickup:</p>
+              <div className="flex justify-center my-4">
+                <QRCodeSVG value={pickupCode} size={160} />
+              </div>
               <p className="font-mono text-3xl font-bold tracking-widest text-primary">
                 {pickupCode}
               </p>
               <p className="mt-2 text-xs text-muted-light">
-                Muestra este codigo al recoger tu orden
+                Muestra este codigo o escanea el QR al recoger tu orden
               </p>
             </Card>
           )}

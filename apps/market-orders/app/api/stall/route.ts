@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { generateOwnerToken, hashOwnerToken } from "@/lib/auth";
 
 export async function GET(req: NextRequest) {
   const address = req.nextUrl.searchParams.get("address");
@@ -23,19 +24,35 @@ export async function GET(req: NextRequest) {
   if (!stall) {
     return NextResponse.json({ error: "stall not found" }, { status: 404 });
   }
-  return NextResponse.json(stall);
+  const { ownerTokenHash, ...publicStall } = stall;
+  void ownerTokenHash;
+  return NextResponse.json(publicStall);
 }
 
 export async function POST(req: NextRequest) {
   const body = await req.json();
-  const { ownerAddress, name } = body;
-  if (!ownerAddress || !name) {
-    return NextResponse.json({ error: "ownerAddress and name required" }, { status: 400 });
+  const { name, ownerAddress } = body;
+  if (!name) {
+    return NextResponse.json({ error: "name required" }, { status: 400 });
   }
-  const stall = await prisma.stall.upsert({
+  if (!ownerAddress) {
+    return NextResponse.json({ error: "ownerAddress required" }, { status: 400 });
+  }
+
+  const existing = await prisma.stall.findUnique({
     where: { ownerAddress },
-    update: { name },
-    create: { ownerAddress, name },
   });
-  return NextResponse.json(stall);
+  if (existing?.ownerTokenHash) {
+    return NextResponse.json({ error: "stall_exists" }, { status: 409 });
+  }
+  const ownerToken = generateOwnerToken();
+  const stall = existing
+    ? await prisma.stall.update({
+        where: { ownerAddress },
+        data: { name, ownerTokenHash: hashOwnerToken(ownerToken) },
+      })
+    : await prisma.stall.create({
+        data: { ownerAddress, name, ownerTokenHash: hashOwnerToken(ownerToken) },
+      });
+  return NextResponse.json({ stall, token: ownerToken });
 }

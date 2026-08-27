@@ -5,10 +5,6 @@ import { AccountModal } from "@/components/AccountModal";
 import { Button } from "@/components/ui/Button";
 import { usePollarAuth } from "@/hooks/usePollarAuth";
 
-/**
- * Logged out: the "Log in with Pollar" button. Logged in: a round account
- * button that opens the account modal (email, wallet address, log out).
- */
 export function LoginButton() {
   const { user, isLoading, login } = usePollarAuth();
   const [accountOpen, setAccountOpen] = useState(false);

@@ -60,7 +60,7 @@
       "slug": "market-orders",
       "category": "community",
       "issue": "https://github.com/pollar-xyz/pollar-apps/issues/15",
-      "deploy": null,
+      "deploy": "https://market-orders.vercel.app",
       "author": "JennyT3"
     },
     {

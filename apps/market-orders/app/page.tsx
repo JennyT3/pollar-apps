@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { usePollar } from "@pollar/react";
 import { usePollarAuth } from "@/hooks/usePollarAuth";
 import { useBalance } from "@/hooks/useBalance";
 import { LoginButton } from "@/components/LoginButton";
@@ -11,6 +12,14 @@ import { Input } from "@/components/ui/Input";
 import { PollarLogo } from "@/components/ui/PollarLogo";
 import { paymentAssetFrom, currencyOf } from "@/lib/payments";
 import { QRCodeSVG } from "qrcode.react";
+import { adminHeaders } from "@/lib/fetch";
+
+const ADMIN_TOKEN_KEY = "ct_admin_token";
+
+function loadAdminToken(): string | null {
+  if (typeof window === "undefined") return null;
+  return window.localStorage.getItem(ADMIN_TOKEN_KEY);
+}
 
 interface Stall {
   id: string;
@@ -42,6 +51,7 @@ const STELLAR_EXPLORER = "https://stellar.expert/explorer/testnet/tx";
 
 export default function CaseraBoard() {
   const { user } = usePollarAuth();
+  const { getClient } = usePollar();
   const { asset } = useBalance();
   const currency = currencyOf(paymentAssetFrom(asset));
 
@@ -50,6 +60,10 @@ export default function CaseraBoard() {
   const [stallName, setStallName] = useState("");
   const [creatingStall, setCreatingStall] = useState(false);
   const [tab, setTab] = useState<"today" | "history">("today");
+  const [adminToken, setAdminToken] = useState<string | null>(() =>
+    loadAdminToken()
+  );
+  const [restoreToken, setRestoreToken] = useState("");
 
   const [itemName, setItemName] = useState("");
   const [itemPrice, setItemPrice] = useState("");
@@ -60,6 +74,7 @@ export default function CaseraBoard() {
     type: "ok" | "err" | "warn";
     text: string;
   } | null>(null);
+  const [itemMsg, setItemMsg] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -81,36 +96,103 @@ export default function CaseraBoard() {
     let cancelled = false;
     async function load() {
       try {
-        const res = await fetch(`/api/order?stallId=${stall!.id}`);
+        const res = await fetch(`/api/order?stallId=${stall!.id}`, {
+          headers: adminHeaders(adminToken),
+        });
         if (res.ok && !cancelled) setOrders(await res.json());
       } catch (e) {
         console.error(e);
       }
     }
+    async function expire() {
+      try { await fetch("/api/order/expire", { method: "POST" }); } catch {}
+    }
     load();
+    expire();
     const iv = setInterval(load, 5000);
-    return () => { cancelled = true; clearInterval(iv); };
-  }, [stall]);
+    const ivExpire = setInterval(expire, 30000);
+    return () => { cancelled = true; clearInterval(iv); clearInterval(ivExpire); };
+  }, [stall, adminToken]);
+
+  useEffect(() => {
+    if (!stall || !user) return;
+    let cancelled = false;
+    async function detectPayments() {
+      try {
+        const client = getClient();
+        await client.fetchTxHistory({ limit: 20 });
+        const state = client.getTxHistoryState();
+        if (state.step !== "loaded") return;
+        const txs = state.data.records;
+        const res = await fetch(`/api/order?stallId=${stall!.id}`, {
+          headers: adminHeaders(adminToken),
+        });
+        if (!res.ok) return;
+        const pendingOrders: Order[] = await res.json();
+        for (const order of pendingOrders.filter(o => o.status === "pending")) {
+          const tx = txs.find((t: { memo?: string; hash: string }) =>
+            t.memo === order.memo
+          );
+          if (tx && !cancelled) {
+            await fetch("/api/order/status", {
+              method: "PATCH",
+              body: JSON.stringify({ id: order.id, status: "paid", txHash: tx.hash }),
+            });
+          }
+        }
+      } catch (e) {
+        console.error("detectPayments:", e);
+      }
+    }
+    detectPayments();
+    const ivDetect = setInterval(detectPayments, 10000);
+    return () => { cancelled = true; clearInterval(ivDetect); };
+  }, [stall, user, adminToken]);
 
   async function createStall() {
     if (!user || !stallName.trim()) return;
     setCreatingStall(true);
-    await fetch("/api/stall", {
+    const res = await fetch("/api/stall", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ownerAddress: user.address, name: stallName.trim() }),
+      headers: adminHeaders(adminToken),
+      body: JSON.stringify({ name: stallName.trim(), ownerAddress: user.address }),
     });
+    if (res.ok) {
+      const data = await res.json();
+      const token = data.token;
+      window.localStorage.setItem(ADMIN_TOKEN_KEY, token);
+      setAdminToken(token);
+      setStall(data.stall);
+    } else {
+      const data = await res.json().catch(() => ({}));
+      setItemMsg(`No se pudo crear el puesto (${res.status} ${data.error ?? ""})`.trim());
+    }
     setStallName("");
     setCreatingStall(false);
-    const res = await fetch(`/api/stall?address=${user.address}`);
-    if (res.ok) setStall(await res.json());
+  }
+
+  async function restoreAdmin() {
+    const token = restoreToken.trim();
+    if (!token || !stall) return;
+    const res = await fetch(`/api/order?stallId=${stall!.id}`, {
+      headers: adminHeaders(token),
+    });
+    if (!res.ok) {
+      setItemMsg("Esa clave no coincide con este puesto.");
+      return;
+    }
+    window.localStorage.setItem(ADMIN_TOKEN_KEY, token);
+    setAdminToken(token);
+    setOrders(await res.json());
+    setRestoreToken("");
+    setItemMsg(null);
   }
 
   async function addItem() {
-    if (!stall || !itemName.trim() || !itemPrice || !itemQty) return;
-    await fetch("/api/stall/items", {
+    if (!user || !stall || !itemName.trim() || !itemPrice || !itemQty) return;
+    const res = await fetch("/api/stall/items", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: adminHeaders(adminToken),
       body: JSON.stringify({
         stallId: stall.id,
         name: itemName.trim(),
@@ -118,31 +200,50 @@ export default function CaseraBoard() {
         quantity: parseInt(itemQty),
       }),
     });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      setItemMsg(`No se pudo agregar el item (${res.status} ${data.error ?? ""})`.trim());
+      return;
+    }
     setItemName("");
     setItemPrice("");
     setItemQty("");
-    const res = await fetch(`/api/stall?address=${user!.address}`);
-    if (res.ok) setStall(await res.json());
+    setItemMsg(null);
+    const reload = await fetch(`/api/stall?address=${user!.address}`);
+    if (reload.ok) setStall(await reload.json());
   }
 
   async function toggleSoldOut(itemId: string, current: boolean) {
-    await fetch("/api/stall/items", {
+    const res = await fetch("/api/stall/items", {
       method: "PATCH",
-      headers: { "Content-Type": "application/json" },
+      headers: adminHeaders(adminToken),
       body: JSON.stringify({ id: itemId, soldOut: !current }),
     });
-    const res = await fetch(`/api/stall?address=${user!.address}`);
-    if (res.ok) setStall(await res.json());
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      setItemMsg(`No se pudo actualizar (${res.status} ${data.error ?? ""})`.trim());
+      return;
+    }
+    setItemMsg(null);
+    const reload = await fetch(`/api/stall?address=${user!.address}`);
+    if (reload.ok) setStall(await reload.json());
   }
 
   async function markReady(orderId: string) {
-    await fetch("/api/order/status", {
+    const res = await fetch("/api/order/status", {
       method: "PATCH",
-      headers: { "Content-Type": "application/json" },
+      headers: adminHeaders(adminToken),
       body: JSON.stringify({ id: orderId, status: "ready" }),
     });
-    const res = await fetch(`/api/order?stallId=${stall!.id}`);
-    if (res.ok) setOrders(await res.json());
+    if (!res.ok) {
+      setItemMsg(`No se pudo marcar listo (${res.status})`);
+      return;
+    }
+    setItemMsg(null);
+    const reload = await fetch(`/api/order?stallId=${stall!.id}`, {
+      headers: adminHeaders(adminToken),
+    });
+    if (reload.ok) setOrders(await reload.json());
   }
 
   async function verifyPickup() {
@@ -150,8 +251,8 @@ export default function CaseraBoard() {
     if (!code || !user) return;
     const res = await fetch("/api/pickup", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ code, callerAddress: user.address }),
+      headers: adminHeaders(adminToken),
+      body: JSON.stringify({ code }),
     });
     const data = await res.json();
     if (data.ok) {
@@ -169,7 +270,9 @@ export default function CaseraBoard() {
       setPickupMsg({ type: "warn", text: "Orden no esta lista" });
     }
     setPickupCode("");
-    const orderRes = await fetch(`/api/order?stallId=${stall!.id}`);
+    const orderRes = await fetch(`/api/order?stallId=${stall!.id}`, {
+      headers: adminHeaders(adminToken),
+    });
     if (orderRes.ok) setOrders(await orderRes.json());
   }
 
@@ -244,6 +347,36 @@ export default function CaseraBoard() {
         <p className="break-all font-mono text-xs">{user.address}</p>
       </Card>
 
+      {adminToken ? (
+        <Card className="p-3">
+          <p className="text-xs text-muted">Clave de administracion:</p>
+          <p className="break-all font-mono text-xs">{adminToken}</p>
+          <p className="mt-1 text-xs text-muted">
+            Guardala: la necesitas para administrar este puesto desde otro
+            dispositivo.
+          </p>
+        </Card>
+      ) : (
+        <Card className="p-3">
+          <p className="mb-1 text-sm font-medium">Pegá tu clave de administracion</p>
+          <div className="flex gap-2">
+            <Input
+              placeholder="ct_..."
+              value={restoreToken}
+              onChange={(e) => setRestoreToken(e.target.value)}
+              className="flex-1"
+            />
+            <Button onClick={restoreAdmin} disabled={!restoreToken.trim()} className="px-3">
+              Vincular
+            </Button>
+          </div>
+          <p className="mt-2 text-xs text-muted">
+            Guardala bien: si la perdes, no hay forma de recuperarla.
+          </p>
+          {itemMsg && <p className="mt-2 text-sm text-destructive">{itemMsg}</p>}
+        </Card>
+      )}
+
       {stallUrl && (
         <Card className="flex flex-col items-center gap-3 p-4">
           <p className="text-sm font-medium">QR del puesto (para imprimir)</p>
@@ -265,6 +398,7 @@ export default function CaseraBoard() {
             +
           </Button>
         </div>
+        {itemMsg && <p className="mt-2 text-sm text-destructive">{itemMsg}</p>}
       </Card>
 
       {stall.items.map((item) => (

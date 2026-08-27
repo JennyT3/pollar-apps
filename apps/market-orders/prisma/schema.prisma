@@ -1,20 +1,22 @@
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
+  previewFeatures = ["driverAdapters"]
 }
 
 datasource db {
   provider = "sqlite"
-  url      = "file:./dev.db"
+  url      = "file:dev.db"
 }
 
 model Stall {
-  id           String     @id @default(cuid())
-  ownerAddress String     @unique
-  name         String
-  createdAt    DateTime   @default(now())
+  id            String    @id @default(cuid())
+  ownerAddress  String    @unique
+  ownerTokenHash String   @default("")
+  name          String
+  createdAt     DateTime  @default(now())
 
-  items        MenuItem[]
-  orders       Order[]
+  items         MenuItem[]
+  orders        Order[]
 }
 
 model MenuItem {
@@ -37,7 +39,7 @@ model Order {
   customerAddress String
   total           Float
   status          String      @default("pending")
-  txHash          String?
+  txHash          String?     @unique
   pickupCode      String
   memo            String
   createdAt       DateTime    @default(now())

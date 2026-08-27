@@ -1,11 +1,27 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { getOwnerTokenFromRequest, ownerTokenMatches } from "@/lib/auth";
+
+function authorized(
+  req: NextRequest,
+  stall: { ownerTokenHash: string | null } | null
+): boolean {
+  if (!stall) return false;
+  return ownerTokenMatches(getOwnerTokenFromRequest(req), stall.ownerTokenHash);
+}
 
 export async function POST(req: NextRequest) {
   const body = await req.json();
   const { stallId, name, price, quantity } = body;
   if (!stallId || !name || price == null || quantity == null) {
     return NextResponse.json({ error: "stallId, name, price, quantity required" }, { status: 400 });
+  }
+  const stall = await prisma.stall.findUnique({ where: { id: stallId } });
+  if (!stall) {
+    return NextResponse.json({ error: "stall not found" }, { status: 404 });
+  }
+  if (!authorized(req, stall)) {
+    return NextResponse.json({ error: "invalid_admin_token" }, { status: 401 });
   }
   const item = await prisma.menuItem.create({
     data: { stallId, name, price, quantity },
@@ -19,7 +35,15 @@ export async function PATCH(req: NextRequest) {
   if (!id) {
     return NextResponse.json({ error: "id required" }, { status: 400 });
   }
-  const item = await prisma.menuItem.update({
+  const item = await prisma.menuItem.findUnique({ where: { id } });
+  if (!item) {
+    return NextResponse.json({ error: "item not found" }, { status: 404 });
+  }
+  const stall = await prisma.stall.findUnique({ where: { id: item.stallId } });
+  if (!authorized(req, stall)) {
+    return NextResponse.json({ error: "invalid_admin_token" }, { status: 401 });
+  }
+  const updated = await prisma.menuItem.update({
     where: { id },
     data: {
       ...(name !== undefined && { name }),
@@ -28,13 +52,21 @@ export async function PATCH(req: NextRequest) {
       ...(soldOut !== undefined && { soldOut }),
     },
   });
-  return NextResponse.json(item);
+  return NextResponse.json(updated);
 }
 
 export async function DELETE(req: NextRequest) {
   const id = req.nextUrl.searchParams.get("id");
   if (!id) {
     return NextResponse.json({ error: "id required" }, { status: 400 });
+  }
+  const item = await prisma.menuItem.findUnique({ where: { id } });
+  if (!item) {
+    return NextResponse.json({ error: "item not found" }, { status: 404 });
+  }
+  const stall = await prisma.stall.findUnique({ where: { id: item.stallId } });
+  if (!authorized(req, stall)) {
+    return NextResponse.json({ error: "invalid_admin_token" }, { status: 401 });
   }
   await prisma.menuItem.delete({ where: { id } });
   return NextResponse.json({ ok: true });

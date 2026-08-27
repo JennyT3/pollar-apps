@@ -4,16 +4,6 @@ import { useEffect, useRef } from "react";
 
 const EXIT_MS = 300;
 
-/**
- * Shared modal shell for the whole app: every modal goes through this one
- * component. On phones it's a bottom sheet (slides in and out through the
- * bottom edge); on desktop (sm+) it's a centered dialog. The backdrop blurs
- * the page. Built on the native <dialog> element (focus trap + Esc for free).
- *
- * Enter animation is pure CSS (`@starting-style`, see `.pollar-modal` in
- * globals.css). Exit is two-phase: add `.closing`, let the transition play,
- * then close(); a CSS-only exit is not reliable across engines.
- */
 export function Modal({
   open,
   onClose,
@@ -24,7 +14,6 @@ export function Modal({
   open: boolean;
   onClose: () => void;
   title?: string;
-  /** Shows a back chevron on the left, for multi-step flows. */
   onBack?: () => void;
   children: React.ReactNode;
 }) {
@@ -53,12 +42,10 @@ export function Modal({
       ref={ref}
       onClose={onClose}
       onCancel={(e) => {
-        // Esc: run the exit animation instead of the instant native close.
         e.preventDefault();
         onClose();
       }}
       onClick={(e) => {
-        // Only the backdrop is the <dialog> itself; inner clicks hit children.
         if (e.target === ref.current) onClose();
       }}
       className="pollar-modal m-0 mt-auto max-h-[88dvh] w-full max-w-full rounded-t-2xl border-border bg-background p-0 text-foreground shadow-xl sm:m-auto sm:max-w-md sm:rounded-2xl sm:border"

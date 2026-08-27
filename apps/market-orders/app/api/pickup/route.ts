@@ -1,16 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
-
-// NOTE: Server-side auth verification is limited because @pollar/react
-// does not expose message signing. We rely on the fact that usePollarAuth()
-// returns the authenticated wallet address and it cannot be altered from
-// the client UI. For testnet spike this is acceptable per bounty scope.
+import { getOwnerTokenFromRequest, ownerTokenMatches } from "@/lib/auth";
 
 export async function POST(req: NextRequest) {
+  const token = getOwnerTokenFromRequest(req);
+  if (!token) {
+    return NextResponse.json({ ok: false, reason: "missing_admin_token" }, { status: 401 });
+  }
+
   const body = await req.json();
-  const { code, callerAddress } = body;
-  if (!code || !callerAddress) {
-    return NextResponse.json({ error: "code and callerAddress required" }, { status: 400 });
+  const { code } = body;
+  if (!code) {
+    return NextResponse.json({ error: "code required" }, { status: 400 });
   }
 
   const order = await prisma.order.findFirst({
@@ -22,8 +23,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: false, reason: "not_found" }, { status: 404 });
   }
 
-  // Only the stall owner can verify pickup
-  if (order.stall.ownerAddress !== callerAddress) {
+  if (!ownerTokenMatches(token, order.stall.ownerTokenHash)) {
     return NextResponse.json({ ok: false, reason: "not_authorized" }, { status: 403 });
   }
 
