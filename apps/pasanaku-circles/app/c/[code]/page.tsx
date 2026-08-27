@@ -75,6 +75,7 @@ export default function CirclePage() {
   }
 
   const isOrganizer = user?.address === circle.organizerAddress;
+  const canManageTurns = Boolean(circle.canManageTurns) || isOrganizer;
   const closed = circle.status === "completed";
 
   return (
@@ -119,7 +120,7 @@ export default function CirclePage() {
           ))}
         </ul>
       </Card>
-      {isOrganizer && circle.status === "open" ? (
+      {canManageTurns && circle.status === "open" ? (
         <Card>
           <h3 className="mb-3 font-semibold">Orden de turnos</h3>
           <TurnOrderEditor

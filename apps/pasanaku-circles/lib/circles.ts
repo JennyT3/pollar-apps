@@ -33,6 +33,7 @@ export type CircleView = {
     txHash: string;
     createdAt: number;
   }[];
+  canManageTurns?: boolean;
 };
 
 function hashToken(token: string): string {
@@ -174,6 +175,15 @@ async function requireAdmin(code: string, adminToken: string) {
     organizerAddress: String(row.organizer_address),
     status: asStatus(row.status),
   };
+}
+
+export async function isAdmin(code: string, adminToken: string): Promise<boolean> {
+  try {
+    await requireAdmin(code, adminToken);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 export async function reorderTurns(

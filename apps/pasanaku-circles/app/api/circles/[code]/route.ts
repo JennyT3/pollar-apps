@@ -1,5 +1,6 @@
+import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
-import { getCircle } from "@/lib/circles";
+import { adminCookieName, getCircle, isAdmin } from "@/lib/circles";
 
 export async function GET(
   _req: Request,
@@ -8,5 +9,8 @@ export async function GET(
   const { code } = await params;
   const circle = await getCircle(code);
   if (!circle) return NextResponse.json({ error: "not found" }, { status: 404 });
-  return NextResponse.json(circle);
+  const token = (await cookies()).get(adminCookieName(code))?.value ?? "";
+  const canManageTurns =
+    circle.status === "open" && token !== "" && (await isAdmin(code, token));
+  return NextResponse.json({ ...circle, canManageTurns });
 }

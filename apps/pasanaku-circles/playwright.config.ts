@@ -5,6 +5,7 @@ const HORIZON = 9876;
 
 export default defineConfig({
   testDir: "./e2e",
+  testIgnore: process.env.SCREENSHOTS === "1" ? undefined : /screenshots\.spec\.ts/,
   fullyParallel: false,
   retries: 0,
   timeout: 60_000,

@@ -11,7 +11,8 @@
     "test:watch": "vitest",
     "test:e2e": "playwright test",
     "test:e2e:testnet": "POLLAR_E2E=1 playwright test e2e/testnet-round.spec.ts",
-    "diagrams": "python3 docs/diagrams/generator/render-all.py"
+    "diagrams": "python3 docs/diagrams/generator/render-all.py",
+    "screenshots": "SCREENSHOTS=1 playwright test e2e/screenshots.spec.ts"
   },
   "dependencies": {
     "@libsql/client": "^0.15.15",

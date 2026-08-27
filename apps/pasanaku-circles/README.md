@@ -33,6 +33,18 @@ La base es un archivo SQLite `data/pasanaku.db` (libSQL), creado al primer reque
 
 Nadie tipea una dirección `G…` en el flujo principal.
 
+## Evidencia del flujo
+
+Capturas reales (móvil + desktop) y diagramas:
+
+- Walkthrough: [docs/screenshots/FLOW.md](docs/screenshots/FLOW.md)
+- Móvil: `docs/screenshots/mobile/`
+- Desktop: `docs/screenshots/desktop/`
+
+```bash
+pnpm screenshots
+```
+
 ## Cómo funciona
 
 Pagos directos a la cuenta Pollar de quien le toca. No hay escrow.
