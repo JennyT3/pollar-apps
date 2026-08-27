@@ -15,7 +15,7 @@ A row is written only when every gate passes:
 9. amount matches in stroops (7 decimals, not floats)
 10. asset is not native XLM
 11. `asset_code === USDC`
-12. `asset_issuer` is Circle testnet USDC (`STELLAR_USDC_ISSUER`, default `GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AT7L7TXMV4L`)
+12. `asset_issuer` is Circle testnet USDC (`STELLAR_USDC_ISSUER`, default `GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5`)
 13. `memo_type === id`
 14. memo equals `memoIdFor(circleId, round, payer)`
 15. `tx_hash` is unique across the whole database (a hash from circle A cannot credit circle B)

@@ -4,7 +4,7 @@ export const A = "G" + "A".repeat(55);
 export const B = "G" + "B".repeat(55);
 export const C = "G" + "C".repeat(55);
 export const USDC_ISSUER =
-  "GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AT7L7TXMV4L";
+  "GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5";
 export const HORIZON = "http://127.0.0.1:9876";
 
 export async function setHorizon(

@@ -20,7 +20,7 @@ describe("stroops", () => {
 describe("usdcIssuer", () => {
   it("defaults to circle testnet usdc", () => {
     expect(DEFAULT_USDC_ISSUER).toBe(
-      "GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AT7L7TXMV4L"
+      "GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5"
     );
     expect(usdcIssuer()).toBe(DEFAULT_USDC_ISSUER);
   });

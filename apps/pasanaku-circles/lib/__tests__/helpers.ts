@@ -6,7 +6,7 @@ import { resetDbForTests } from "@/lib/db";
 import { createCircle, joinCircle } from "@/lib/circles";
 
 export const USDC_ISSUER =
-  "GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AT7L7TXMV4L";
+  "GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5";
 
 export const A = "G" + "A".repeat(55);
 export const B = "G" + "B".repeat(55);
@@ -126,7 +126,6 @@ export async function threeMemberCircle(amount = "10") {
     amount,
     frequency: "weekly",
     organizerAddress: A,
-    shuffle: false,
   });
   await joinCircle(created.code, B);
   await joinCircle(created.code, C);
