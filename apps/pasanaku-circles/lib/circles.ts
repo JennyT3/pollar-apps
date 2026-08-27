@@ -64,7 +64,6 @@ export async function createCircle(input: {
   amount: string;
   frequency: Frequency;
   organizerAddress: string;
-  shuffle: boolean;
 }): Promise<{ code: string; adminToken: string }> {
   if (!input.name.trim()) throw new Error("name required");
   if (!Number.isFinite(Number(input.amount)) || Number(input.amount) <= 0) {

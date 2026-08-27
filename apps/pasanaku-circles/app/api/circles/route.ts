@@ -20,14 +20,12 @@ export async function POST(req: Request) {
       amount?: string;
       frequency?: Frequency;
       organizerAddress?: string;
-      shuffle?: boolean;
     };
     const created = await createCircle({
       name: body.name ?? "",
       amount: body.amount ?? "",
       frequency: body.frequency ?? "weekly",
       organizerAddress: body.organizerAddress ?? "",
-      shuffle: Boolean(body.shuffle),
     });
     const res = NextResponse.json({ code: created.code });
     res.cookies.set(adminCookieName(created.code), created.adminToken, {

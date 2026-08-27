@@ -49,6 +49,17 @@ pnpm screenshots
 
 Pagos directos a la cuenta Pollar de quien le toca. No hay escrow.
 
+```mermaid
+flowchart LR
+    A[Escanea QR de ronda<br/>/c/code/pay] --> B[Login Pollar<br/>si no tiene sesión]
+    B --> C[Pay page<br/>destinatario + monto prefilled]
+    C --> D["runTx('payment')<br/>USDC + memo id"]
+    D --> E[POST /pay<br/>hash + payer]
+    E --> F{Horizon check<br/>from · memo · asset · monto}
+    F -->|todo ok| G[Estado actualizado<br/>Pagó / Debe / Le toca]
+    F -->|falla algún check| H[Rechazado<br/>XLM · self-pay · replay · hash duplicado]
+```
+
 - [Arquitectura](docs/diagrams/output/01-system-architecture.png)
 - [Flujo QR](docs/diagrams/output/02-qr-contribution-flow.png)
 - [Estados del círculo](docs/diagrams/output/03-circle-state-machine.png)
