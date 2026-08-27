@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { usePollar } from "@pollar/react";
 import { AppHeader } from "@/components/AppHeader";
 import { BalanceCard } from "@/components/BalanceCard";
 import { Button } from "@/components/ui/Button";
@@ -34,6 +35,10 @@ interface PollaSummary {
 export default function Home() {
   const { user, isLoading } = usePollarAuth();
   const { ready, ensure, error: sessionError } = useAppSession();
+  // The SDK's own send and receive screens. Topping up a wallet is Pollar's
+  // job, not this app's, so this opens what the SDK already ships instead of
+  // building a second money-moving flow.
+  const { openSendModal, openReceiveModal } = usePollar();
   const [pollas, setPollas] = useState<PollaSummary[] | null>(null);
   // Whose list is on screen. Adjusting it during render (rather than from an
   // effect) is how React wants derived state reset when a prop-like value
@@ -102,6 +107,24 @@ export default function Home() {
         ) : (
           <>
             <BalanceCard />
+
+            <div className="flex gap-2">
+              <Button
+                variant="secondary"
+                onClick={openReceiveModal}
+                className="flex-1 py-3"
+              >
+                Recibir
+              </Button>
+              <Button
+                variant="secondary"
+                onClick={openSendModal}
+                className="flex-1 py-3"
+              >
+                Enviar
+              </Button>
+            </div>
+
             <Link href="/nueva" className="block">
               <Button className="w-full py-3">Armar una polla</Button>
             </Link>
