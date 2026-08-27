@@ -4,7 +4,7 @@ import { useState } from "react";
 import { usePollar } from "@pollar/react";
 import { Button } from "@/components/ui/Button";
 import { useBalance } from "@/hooks/useBalance";
-import { paymentAssetFrom } from "@/lib/payments";
+import { contributionAssetFrom } from "@/lib/payments";
 
 export function ContributeButton({
   amount,
@@ -18,21 +18,28 @@ export function ContributeButton({
   onPaid: (hash: string) => Promise<void> | void;
 }) {
   const { isAuthenticated, verified, runTx } = usePollar();
-  const { asset } = useBalance();
+  const { asset, isLoading } = useBalance();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [hash, setHash] = useState<string | null>(null);
+
+  const usdcReady =
+    asset &&
+    asset.type !== "native" &&
+    asset.code === "USDC" &&
+    Boolean(asset.issuer);
 
   async function pay() {
     setBusy(true);
     setError(null);
     try {
+      const paymentAsset = contributionAssetFrom(asset);
       const result = await runTx(
         "payment",
         {
           destination: recipient,
           amount,
-          asset: paymentAssetFrom(asset),
+          asset: paymentAsset,
         },
         { memo: { type: "id", value: memoId } }
       );
@@ -51,6 +58,18 @@ export function ContributeButton({
 
   if (!isAuthenticated) {
     return <p className="text-sm text-muted">Entrá con Pollar para pagar.</p>;
+  }
+
+  if (isLoading || !asset) {
+    return <p className="text-sm text-muted">Esperando el saldo USDC…</p>;
+  }
+
+  if (!usdcReady) {
+    return (
+      <p className="text-sm text-error">
+        Este pago es en USDC, no en XLM. El saldo USDC todavía no está listo.
+      </p>
+    );
   }
 
   return (

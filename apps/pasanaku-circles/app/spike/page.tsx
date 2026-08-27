@@ -1,22 +1,27 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { Suspense, useState, useSyncExternalStore } from "react";
+import { useSearchParams } from "next/navigation";
 import { AppShell } from "@/components/AppShell";
 import { ContributeButton } from "@/components/ContributeButton";
 import { Input } from "@/components/ui/Input";
 import { usePollarAuth } from "@/hooks/usePollarAuth";
 import { explorerTxUrl } from "@/lib/horizon";
 
-export default function SpikePage() {
+function SpikeInner() {
   const { user } = usePollarAuth();
-  const origin = useMemo(
-    () => (typeof window === "undefined" ? "" : window.location.origin),
-    []
+  const params = useSearchParams();
+  const origin = useSyncExternalStore(
+    () => () => {},
+    () => window.location.origin,
+    () => ""
   );
-  const [recipient, setRecipient] = useState("");
-  const [amount, setAmount] = useState("1");
+  const [recipient, setRecipient] = useState(params.get("to") ?? "");
+  const [amount, setAmount] = useState(params.get("amount") ?? "1");
   const [hash, setHash] = useState<string | null>(null);
-  const payUrl = `${origin}/spike?to=${encodeURIComponent(recipient)}&amount=${encodeURIComponent(amount)}`;
+  const payUrl = origin
+    ? `${origin}/spike?to=${encodeURIComponent(recipient)}&amount=${encodeURIComponent(amount)}`
+    : "";
 
   return (
     <AppShell>
@@ -35,7 +40,7 @@ export default function SpikePage() {
         value={amount}
         onChange={(e) => setAmount(e.target.value)}
       />
-      {recipient ? (
+      {origin && recipient ? (
         <>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
@@ -62,5 +67,19 @@ export default function SpikePage() {
         </a>
       ) : null}
     </AppShell>
+  );
+}
+
+export default function SpikePage() {
+  return (
+    <Suspense
+      fallback={
+        <AppShell>
+          <p className="text-muted">Cargando…</p>
+        </AppShell>
+      }
+    >
+      <SpikeInner />
+    </Suspense>
   );
 }

@@ -27,6 +27,21 @@ export function paymentAssetFrom(
   return { type: "native" };
 }
 
+/** Contributions must be USDC. Never silently fall back to XLM. */
+export function contributionAssetFrom(
+  record: WalletBalanceRecord | null
+): PaymentAsset {
+  if (
+    record &&
+    (record.type === "credit_alphanum4" || record.type === "credit_alphanum12") &&
+    record.code === "USDC" &&
+    record.issuer
+  ) {
+    return { type: record.type, code: record.code, issuer: record.issuer };
+  }
+  throw new Error("usdc balance is required");
+}
+
 export function currencyOf(asset: PaymentAsset): string {
   return asset.type === "native" ? "XLM" : asset.code;
 }

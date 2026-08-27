@@ -30,4 +30,10 @@ Abrí `/spike` en dos navegadores (o un teléfono + una laptop). Entrá con cuen
 
 ## Hashes
 
-Se llenan en el PR cuando el spike corre contra testnet con una publishable key.
+Pendiente de corrida con `pub_testnet_…` y dos cuentas reales.
+
+Cuando exista:
+
+- Hash: `<pegar>`
+- Explorer: https://stellar.expert/explorer/testnet/tx/<pegar>
+- Checks: `successful`, `from` = A, `to` = B, amount, asset USDC (no XLM), memo id presente

@@ -1,15 +1,22 @@
+import { amountsEqual as stroopEqual } from "./asset";
+
 const HORIZON =
   process.env.STELLAR_HORIZON_URL ?? "https://horizon-testnet.stellar.org";
 
 export type HorizonPayment = {
   successful: boolean;
   hash: string;
+  from: string;
   to: string;
   amount: string;
+  assetType: string | null;
   assetCode: string | null;
   assetIssuer: string | null;
   memo: string | null;
   memoType: string | null;
+  opType: string | null;
+  paymentOpCount: number;
+  opCount: number;
 };
 
 function asRecord(value: unknown): Record<string, unknown> {
@@ -20,50 +27,70 @@ export async function fetchPayment(hash: string): Promise<HorizonPayment | null>
   const txRes = await fetch(`${HORIZON}/transactions/${hash}`);
   if (!txRes.ok) return null;
   const tx = asRecord(await txRes.json());
+  const memo = typeof tx.memo === "string" ? tx.memo : null;
+  const memoType = typeof tx.memo_type === "string" ? tx.memo_type : null;
+
   if (tx.successful !== true) {
     return {
       successful: false,
       hash,
+      from: "",
       to: "",
       amount: "",
+      assetType: null,
       assetCode: null,
       assetIssuer: null,
-      memo: typeof tx.memo === "string" ? tx.memo : null,
-      memoType: typeof tx.memo_type === "string" ? tx.memo_type : null,
+      memo,
+      memoType,
+      opType: null,
+      paymentOpCount: 0,
+      opCount: 0,
     };
   }
 
-  const opsRes = await fetch(`${HORIZON}/transactions/${hash}/operations`);
+  const opsRes = await fetch(`${HORIZON}/transactions/${hash}/operations?limit=200`);
   if (!opsRes.ok) return null;
   const opsBody = asRecord(await opsRes.json());
   const records = Array.isArray(opsBody._embedded)
     ? []
     : ((asRecord(opsBody._embedded).records as unknown[]) ?? []);
-  const payment = records
-    .map(asRecord)
-    .find((op) => op.type === "payment" || op.type === "path_payment_strict_send");
+  const ops = records.map(asRecord);
+  const paymentOps = ops.filter((op) => op.type === "payment");
+  const first = ops[0] ?? {};
+  const payment = paymentOps[0] ?? null;
 
-  if (!payment) return null;
+  const assetType =
+    payment && typeof payment.asset_type === "string"
+      ? String(payment.asset_type)
+      : null;
 
   return {
     successful: true,
     hash,
-    to: String(payment.to ?? ""),
-    amount: String(payment.amount ?? ""),
+    from: payment ? String(payment.from ?? "") : "",
+    to: payment ? String(payment.to ?? "") : "",
+    amount: payment ? String(payment.amount ?? "") : "",
+    assetType,
     assetCode:
-      payment.asset_type === "native" ? "XLM" : String(payment.asset_code ?? ""),
+      assetType === "native"
+        ? "XLM"
+        : payment
+          ? String(payment.asset_code ?? "")
+          : null,
     assetIssuer:
-      payment.asset_type === "native" ? null : String(payment.asset_issuer ?? ""),
-    memo: typeof tx.memo === "string" ? tx.memo : null,
-    memoType: typeof tx.memo_type === "string" ? tx.memo_type : null,
+      assetType === "native" || !payment
+        ? null
+        : String(payment.asset_issuer ?? ""),
+    memo,
+    memoType,
+    opType: typeof first.type === "string" ? String(first.type) : null,
+    paymentOpCount: paymentOps.length,
+    opCount: ops.length,
   };
 }
 
 export function amountsEqual(a: string, b: string): boolean {
-  const left = Number.parseFloat(a);
-  const right = Number.parseFloat(b);
-  if (!Number.isFinite(left) || !Number.isFinite(right)) return false;
-  return Math.round(left * 1e7) === Math.round(right * 1e7);
+  return stroopEqual(a, b);
 }
 
 export function explorerTxUrl(hash: string): string {

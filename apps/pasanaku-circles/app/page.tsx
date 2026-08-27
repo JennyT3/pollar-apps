@@ -7,10 +7,17 @@ import { BalanceCard } from "@/components/BalanceCard";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { LoginButton } from "@/components/LoginButton";
+import { RegionalNamesNote } from "@/components/RegionalNamesNote";
 import { PollarLogo } from "@/components/ui/PollarLogo";
 import { usePollarAuth } from "@/hooks/usePollarAuth";
 
-type CircleRow = { code: string; name: string; amount: string; currentRound: number };
+type CircleRow = {
+  code: string;
+  name: string;
+  amount: string;
+  currentRound: number;
+  status?: string;
+};
 
 export default function Home() {
   const { user } = usePollarAuth();
@@ -37,6 +44,7 @@ export default function Home() {
             Un círculo, un monto fijo, un turno cada ronda. Pagás escaneando,
             como en la tienda.
           </p>
+          <RegionalNamesNote className="max-w-sm" />
         </div>
         <LoginButton />
       </main>
@@ -59,7 +67,10 @@ export default function Home() {
               <Card className="p-4">
                 <p className="font-semibold">{circle.name}</p>
                 <p className="text-sm text-muted">
-                  {circle.amount} USDC · ronda {circle.currentRound}
+                  {circle.amount} USDC ·{" "}
+                  {circle.status === "completed"
+                    ? "cerrado"
+                    : `ronda ${circle.currentRound}`}
                 </p>
               </Card>
             </Link>

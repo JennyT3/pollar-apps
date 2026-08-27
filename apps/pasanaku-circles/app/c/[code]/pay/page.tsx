@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { AppShell } from "@/components/AppShell";
 import { ContributeButton } from "@/components/ContributeButton";
 import { usePollarAuth } from "@/hooks/usePollarAuth";
+import { shortAddress } from "@/lib/format";
 
 export default function PayPage({ params }: { params: Promise<{ code: string }> }) {
   const { code } = use(params);
@@ -40,6 +41,8 @@ export default function PayPage({ params }: { params: Promise<{ code: string }> 
     router.push(`/c/${code}`);
   }
 
+  const isRecipient = Boolean(user && prep?.recipient && user.address === prep.recipient);
+
   return (
     <AppShell>
       <h2 className="text-2xl font-bold">Pagar la ronda</h2>
@@ -49,11 +52,15 @@ export default function PayPage({ params }: { params: Promise<{ code: string }> 
         <p className="text-muted">Cargando…</p>
       ) : !prep.recipient ? (
         <p className="text-muted">Faltan miembros para abrir la ronda.</p>
+      ) : isRecipient ? (
+        <p className="text-sm text-muted">
+          Esta ronda te toca cobrar. El aporte llega a {shortAddress(prep.recipient)}.
+        </p>
       ) : (
         <>
           <p className="text-sm text-muted">
-            Vas a enviar {prep.amount} USDC a {prep.recipient.slice(0, 6)}…
-            {prep.recipient.slice(-4)}. Un toque más.
+            Vas a enviar {prep.amount} USDC a {shortAddress(prep.recipient)}. Un
+            toque más.
           </p>
           <ContributeButton
             amount={prep.amount}

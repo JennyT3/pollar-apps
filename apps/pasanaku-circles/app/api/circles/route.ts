@@ -1,5 +1,10 @@
 import { NextResponse } from "next/server";
-import { createCircle, listCirclesFor, type Frequency } from "@/lib/circles";
+import {
+  adminCookieName,
+  createCircle,
+  listCirclesFor,
+  type Frequency,
+} from "@/lib/circles";
 
 export async function GET(req: Request) {
   const address = new URL(req.url).searchParams.get("address") ?? "";
@@ -24,8 +29,8 @@ export async function POST(req: Request) {
       organizerAddress: body.organizerAddress ?? "",
       shuffle: Boolean(body.shuffle),
     });
-    const res = NextResponse.json(created);
-    res.cookies.set("pasanaku_admin", created.adminToken, {
+    const res = NextResponse.json({ code: created.code });
+    res.cookies.set(adminCookieName(created.code), created.adminToken, {
       httpOnly: true,
       sameSite: "lax",
       path: "/",

@@ -43,3 +43,12 @@ next-env.d.ts
 
 # local sqlite (libsql file store)
 /data
+
+# playwright
+/test-results
+/playwright-report
+/e2e/.auth
+
+# python
+**/__pycache__/
+*.pyc

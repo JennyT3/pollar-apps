@@ -13,7 +13,6 @@ export default function NewCirclePage() {
   const [name, setName] = useState("");
   const [amount, setAmount] = useState("10");
   const [frequency, setFrequency] = useState("weekly");
-  const [token, setToken] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -38,8 +37,7 @@ export default function NewCirclePage() {
       });
       const body = await res.json();
       if (!res.ok) throw new Error(body.error ?? "no se pudo crear");
-      setToken(body.adminToken);
-      setTimeout(() => router.push(`/c/${body.code}`), 1200);
+      router.push(`/c/${body.code}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "no se pudo crear");
     } finally {
@@ -50,6 +48,10 @@ export default function NewCirclePage() {
   return (
     <AppShell>
       <h2 className="text-2xl font-bold">Crear círculo</h2>
+      <p className="text-sm text-muted">
+        En este dispositivo vas a poder sortear o reordenar los turnos mientras
+        el círculo esté abierto.
+      </p>
       <form onSubmit={submit} className="flex flex-col gap-3">
         <label className="text-sm font-medium">
           Nombre
@@ -79,11 +81,6 @@ export default function NewCirclePage() {
         <Button type="submit" loading={busy}>
           Crear
         </Button>
-        {token ? (
-          <p className="break-all text-xs text-muted">
-            Guardá esta clave de organizador (se muestra una vez): {token}
-          </p>
-        ) : null}
         {error ? <p className="text-sm text-error">{error}</p> : null}
       </form>
     </AppShell>
