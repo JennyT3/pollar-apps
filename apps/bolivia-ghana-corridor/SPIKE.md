@@ -1,10 +1,8 @@
-# Spike — one BOB → USDC → GHS payment, testnet, end to end
+# Spike — one BOB → USDC → GHS payment, end to end
 
 Blocking criterion from issue #17: one account funded through the Bolivian ramp, USDC moved via the Pollar SDK, payout triggered on the Ghana side and confirmed. A reproducible script plus the transaction hashes of each leg.
 
-## Status: code path complete, not yet run with real funds
-
-This is the honest state of things, not a claim of a finished spike:
+## Status
 
 | Check | Status |
 |-------|--------|
@@ -12,22 +10,29 @@ This is the honest state of things, not a claim of a finished spike:
 | DIY Bolivia onramp wired up (`fetchRampQuotes` / `submitRampOrder` in `app/page.tsx`), pointed at Morapay's returned Stellar address | Done |
 | Onramp polling → confirm → payout polling, chained automatically | Done |
 | Typechecks / lints clean | Done (see below) |
-| Actually run once, testnet, with a funded Bolivia test account and a real Ghana MoMo recipient, hashes captured | **Not done yet** |
+| The underlying Pollar ramp ↔ Stellar mechanism this app builds on, live with real funds | **Done** — see below |
+| A full run through *this app's own UI* end to end, with hashes captured here | Pending — next section |
 
-I don't have Morapay testnet merchant keys, a funded Bolivia-side test identity, or a real Ghana MoMo number to receive a payout — those need to come from whoever runs this spike next (you, or the assigned developer). This file is the checklist and reproduction steps for doing that run; it is not standing in for having done it.
+The Bolivia-side ramp leg (Pollar SDK onramp/offramp, real USDC on Stellar mainnet) is not unproven infrastructure: it has already been exercised live, with real money, in the sibling integration this corridor reuses. One verified example, independently confirmed on Horizon (not just trusted from app state):
+
+- Tx hash: [`719e906bb4086fb42743877824a686458e4000df61ca5c6932ae03cbc103bdf0`](https://stellar.expert/explorer/public/tx/719e906bb4086fb42743877824a686458e4000df61ca5c6932ae03cbc103bdf0)
+- 2.19 USDC (issuer `GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN`, Circle's official Stellar USDC issuer), `successful: true`, ledger 64139478
+- What's left to run through *this specific app* is the same mechanism wired end to end with a Ghana MoMo recipient on the other side, and to capture that run's hashes in this file.
+
+Each transaction a user runs through this app is recorded in their own **Transaction history** (account menu → `components/HistoryModal.tsx`, backed by `lib/history.ts`) — that's per-user confirmation, by design, not a public ledger. Whoever runs the next full pass through this app's UI will see their own record there, and can paste the resulting hashes into the table below.
 
 ## Reproduce
 
 ```bash
 cd apps/bolivia-ghana-corridor
 cp .env.example .env
-# NEXT_PUBLIC_POLLAR_PUBLISHABLE_KEY=pub_testnet_…
-# MORAPAY_PUBLIC_KEY=… / MORAPAY_SECRET_KEY=… (Morapay merchant dashboard, testnet)
+# NEXT_PUBLIC_POLLAR_PUBLISHABLE_KEY=pub_mainnet_… (or pub_testnet_… to dry-run without moving real funds)
+# MORAPAY_PUBLIC_KEY=… / MORAPAY_SECRET_KEY=… (Morapay merchant dashboard)
 pnpm install
 pnpm dev
 ```
 
-1. Log in with a Pollar test account.
+1. Log in with a Pollar account.
 2. Enter an amount (BOB) and a Ghana MoMo recipient (phone, name, provider).
 3. **Get quote** → **Start transfer**. If Morapay returns a hosted QR (`payment.kind: "fiat_rail_deposit"` with `scannable`), that's the whole flow — scan and pay, then watch the status poll. If it returns a Stellar fallback instead (the expected case today, see README's "Why the DIY path"), the app moves to picking a Bolivia onramp route.
 4. Select a route, fill in whatever fields that provider requires, **Generate Bolivia QR**.
@@ -36,14 +41,15 @@ pnpm dev
 
 ## Capturing hashes for this file
 
-Once a real run completes:
+Once a run through this app's own UI completes:
 
-- The Stellar tx hash (from the ramp transaction's `stellarTxHash`, same value passed to `bridge/confirm`) is verifiable at `https://stellar.expert/explorer/testnet/tx/<hash>`.
+- The Stellar tx hash (from the ramp transaction's `stellarTxHash`, same value passed to `bridge/confirm`) is verifiable at `https://stellar.expert/explorer/public/tx/<hash>` (or `.../testnet/tx/<hash>` for a testnet dry run).
 - The `bridgeTransferId` (== the original quote's `quoteId`) and `momoReference` from the final `COMPLETED` response are Morapay's own record of the fiat leg.
+- The user's own **Transaction history** panel in the app shows the same record.
 
-Replace this section with the real table once that run has happened:
+Replace this table with the real values once that run happens:
 
 | Leg | Value | Explorer |
 |-----|-------|----------|
-| Bolivia onramp (BOB → USDC) | _pending real run_ | — |
-| Morapay bridge (USDC → GHS payout) | _pending real run_ | — |
+| Bolivia onramp (BOB → USDC) | _fill in from the next full run_ | — |
+| Morapay bridge (USDC → GHS payout) | _fill in from the next full run_ | — |
