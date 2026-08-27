@@ -29,6 +29,13 @@ That is the whole setup. The only value you must fill is
 `NEXT_PUBLIC_POLLAR_PUBLISHABLE_KEY`; the database creates and migrates itself on
 the first request.
 
+One thing to do in the dashboard, or login fails before the app is even
+involved: add your origin under **Build → Domains**. Pollar rejects SDK requests
+from origins that are not listed, so `http://localhost:3000` has to be added
+explicitly for local work, and the deploy URL for production. Wildcards are not
+supported, so list each environment separately. Changes apply immediately, with
+no redeploy.
+
 ### Environment
 
 | Variable | Required | What it does |
@@ -247,3 +254,7 @@ vercel deploy --prod
 The Turso integration injects `TURSO_DATABASE_URL` and `TURSO_AUTH_TOKEN`, which
 `db/url.ts` reads directly, so there is nothing to copy by hand. Any other libSQL
 provider works too through `DATABASE_URL` and `DATABASE_AUTH_TOKEN`.
+
+Then add the deploy URL under **Build → Domains** in the Pollar dashboard. Use
+the stable production alias rather than the per-deployment URL, which changes on
+every push and would have to be listed again each time.
