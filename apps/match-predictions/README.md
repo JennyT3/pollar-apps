@@ -36,6 +36,7 @@ the first request.
 | `NEXT_PUBLIC_POLLAR_PUBLISHABLE_KEY` | yes | Your `pub_testnet_…` key. Also selects the network: the SDK reads testnet from the key prefix. |
 | `DATABASE_URL` | only to deploy | libSQL/Turso URL. Unset, the app uses a local SQLite file at `./data/polla.db`. |
 | `DATABASE_AUTH_TOKEN` | only to deploy | Token for that database. |
+| `TURSO_DATABASE_URL` / `TURSO_AUTH_TOKEN` | alternative | What Vercel's Turso marketplace integration injects. Read as a fallback, so connecting the database in the dashboard is enough. |
 
 Horizon and the USDC issuer are not environment variables. Horizon is a public
 read-only API and an issuer is public information, so both live in
@@ -231,8 +232,18 @@ for.
 
 ## Deploy
 
-1. Create a libSQL/Turso database and run `pnpm db:migrate` against it.
-2. Set `NEXT_PUBLIC_POLLAR_PUBLISHABLE_KEY`, `DATABASE_URL` and
-   `DATABASE_AUTH_TOKEN` in the Vercel project.
-3. Deploy, then put the production URL in `pollar.manifest.json` and in
-   `apps.json`.
+Live at **https://la-polla-seven.vercel.app**.
+
+From the app folder:
+
+```bash
+vercel link
+vercel env add NEXT_PUBLIC_POLLAR_PUBLISHABLE_KEY production
+vercel integration add tursocloud/database   # provisions and connects the database
+pnpm db:migrate                              # once, against the remote database
+vercel deploy --prod
+```
+
+The Turso integration injects `TURSO_DATABASE_URL` and `TURSO_AUTH_TOKEN`, which
+`db/url.ts` reads directly, so there is nothing to copy by hand. Any other libSQL
+provider works too through `DATABASE_URL` and `DATABASE_AUTH_TOKEN`.

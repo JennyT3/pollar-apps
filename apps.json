@@ -53,7 +53,7 @@
       "slug": "match-predictions",
       "category": "community",
       "issue": "https://github.com/pollar-xyz/pollar-apps/issues/14",
-      "deploy": null,
+      "deploy": "https://la-polla-seven.vercel.app",
       "author": "diegoveme"
     },
     {
