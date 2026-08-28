@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getUserOrganizedPools, getUserContributedPools, syncExpiredPools } from '../../../../lib/pools';
+import { getUserOrganizedPools, getUserContributedPools } from '../../../../lib/pools';
 
 export async function GET(request: Request) {
   try {
@@ -10,7 +10,6 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'Dirección inválida' }, { status: 400 });
     }
 
-    await syncExpiredPools();
 
     const [organized, contributed] = await Promise.all([
       getUserOrganizedPools(address),

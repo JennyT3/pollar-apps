@@ -41,7 +41,7 @@ export function PoolActions({ pool, onPoolUpdated }: PoolActionsProps) {
       } catch (e) {
         console.warn('Could not fetch server time', e);
       }
-      
+
       const offset = serverTime - Date.now();
       const exp = Date.now() + offset + 10 * 60 * 1000;
       const message = buildSessionMessage(user.address, exp);
@@ -80,12 +80,12 @@ export function PoolActions({ pool, onPoolUpdated }: PoolActionsProps) {
 
   return (
     <>
-      <div className="flex flex-col sm:flex-row justify-center items-center gap-4">
+      <div className="flex flex-col gap-3">
         <Button
           onClick={() => router.push(`/pool/${pool.id}/contribute`)}
-          className="font-semibold py-3.5 px-8 rounded-full shadow-lg transition-transform hover:scale-105 text-lg"
+          className="w-full font-semibold py-4 text-lg rounded-xl shadow-lg transition-transform hover:-translate-y-0.5"
         >
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="mr-2 inline-block">
             <path d="M12 2v20" />
             <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
           </svg>
@@ -95,7 +95,7 @@ export function PoolActions({ pool, onPoolUpdated }: PoolActionsProps) {
           <Button
             variant="secondary"
             onClick={() => setIsCloseModalOpen(true)}
-            className="text-error! border-error! hover:bg-error/10! py-3.5 px-6 rounded-full h-full"
+            className="w-full text-error! border-error-border! hover:bg-error-light! hover:border-error! transition-colors text-sm font-medium rounded-xl"
           >
             Cerrar pool
           </Button>

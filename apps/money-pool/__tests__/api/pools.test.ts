@@ -6,6 +6,8 @@ import { NextResponse } from 'next/server';
 
 vi.mock('../../lib/pools', () => ({
   createPool: vi.fn(),
+  getPools: vi.fn(),
+  syncExpiredPools: vi.fn(),
 }));
 
 vi.mock('../../lib/server-auth', () => ({

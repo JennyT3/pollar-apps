@@ -1,8 +1,8 @@
 import { vi, describe, it, expect } from 'vitest';
 import { createPool, getPool } from '../../lib/pools';
 
-vi.mock('../../db/client', () => {
-  const dbMock = {
+vi.mock('../../db/client', () => ({
+  db: {
     insert: vi.fn().mockReturnThis(),
     values: vi.fn().mockReturnThis(),
     returning: vi.fn().mockResolvedValue([
@@ -11,9 +11,9 @@ vi.mock('../../db/client', () => {
     select: vi.fn().mockReturnThis(),
     from: vi.fn().mockReturnThis(),
     where: vi.fn().mockResolvedValue([]),
-  };
-  return { db: dbMock };
-});
+  },
+  initLocalDb: vi.fn().mockResolvedValue(undefined),
+}));
 
 describe('Pools lib', () => {
   it('createPool generates an id and maintains goalAmount as string', async () => {

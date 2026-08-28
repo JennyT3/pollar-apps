@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { PATCH } from '../../app/api/pools/[id]/route';
+import { GET, PATCH } from '../../app/api/pools/[id]/route';
 import { getPoolWithTotal, updatePoolStatus } from '../../lib/pools';
 import { requirePoolOrganizer } from '../../lib/server-auth';
 import { NextResponse } from 'next/server';
@@ -8,7 +8,11 @@ vi.mock('../../lib/pools', () => ({
   getPoolWithTotal: vi.fn(),
   updatePoolStatus: vi.fn(),
   toPublicPool: vi.fn((pool) => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { organizerUserId, ...publicPool } = pool;
+    if (publicPool.deadline && new Date() > new Date(publicPool.deadline)) {
+      publicPool.status = 'closed';
+    }
     return publicPool;
   })
 }));
@@ -74,8 +78,8 @@ describe('PATCH /api/pools/[id]', () => {
     } as unknown as import('../../lib/pools').PoolWithTotal;
 
     vi.mocked(getPoolWithTotal)
-      .mockResolvedValueOnce(mockPool)      // Primera llamada para validar
-      .mockResolvedValueOnce(updatedPool);  // Segunda llamada para devolver el actualizado
+      .mockResolvedValueOnce(mockPool)
+      .mockResolvedValueOnce(updatedPool);
 
     vi.mocked(requirePoolOrganizer).mockResolvedValueOnce({
       ok: true,
@@ -89,7 +93,42 @@ describe('PATCH /api/pools/[id]', () => {
     const data = await response.json();
 
     expect(data.status).toBe('closed');
-    expect(data.organizerUserId).toBeUndefined(); // Protegido contra fuga de información
+    expect(data.organizerUserId).toBeUndefined();
     expect(updatePoolStatus).toHaveBeenCalledWith('pool-1', 'closed');
+  });
+});
+
+describe('GET /api/pools/[id] (DoS Mitigation)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('should dynamically infer closed status for an expired pool without mutating DB', async () => {
+    const pastDate = new Date(Date.now() - 10000);
+
+    vi.mocked(getPoolWithTotal).mockResolvedValueOnce({
+      id: 'pool-expired',
+      name: 'Expired Pool',
+      description: null,
+      goalAmount: '100',
+      deadline: pastDate,
+      organizerAddress: 'G_TEST',
+      organizerUserId: 'G_TEST',
+      status: 'open',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      total: '0',
+      percentage: 0,
+      contributions: []
+    } as unknown as import('../../lib/pools').PoolWithTotal);
+
+    const request = new Request('http://localhost/api/pools/pool-expired');
+    const response = await GET(request, { params: Promise.resolve({ id: 'pool-expired' }) });
+    const data = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(getPoolWithTotal).toHaveBeenCalledWith('pool-expired');
+
+    expect(data.status).toBe('closed');
   });
 });

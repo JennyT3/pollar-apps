@@ -60,7 +60,8 @@ export async function POST(request: Request) {
       organizerUserId,
     });
 
-    const { organizerUserId: _, ...publicPool } = pool;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { organizerUserId: _unused, ...publicPool } = pool;
 
     return NextResponse.json(publicPool, { status: 201 });
   } catch (error) {

@@ -1,10 +1,23 @@
 "use client";
 
 import { useState } from "react";
+import type { WalletBalanceRecord } from "@pollar/core";
 import { usePollar } from "@pollar/react";
 import { Button } from "./ui/Button";
 import { useBalance } from "../hooks/useBalance";
-import { currencyOf, paymentAssetFrom } from "../lib/payments";
+import { currencyOf, type PaymentAsset } from "../lib/payments";
+
+function contributionAssetFrom(record: WalletBalanceRecord | null): PaymentAsset | null {
+  if (
+    record &&
+    (record.type === "credit_alphanum4" || record.type === "credit_alphanum12") &&
+    record.code === "USDC" &&
+    record.issuer
+  ) {
+    return { type: record.type, code: record.code, issuer: record.issuer };
+  }
+  return null;
+}
 
 interface ContributeButtonProps {
   poolId: string;
@@ -28,13 +41,13 @@ export function ContributeButton({
   disabled,
 }: ContributeButtonProps) {
   const { isAuthenticated, verified, runTx } = usePollar();
-  const { balance, asset } = useBalance();
+  const { balance, asset, isLoading } = useBalance();
   const [step, setStep] = useState<Step>("idle");
   const [errorMessage, setErrorMessage] = useState<string>("");
 
-  const payAsset = paymentAssetFrom(asset);
+  const payAsset = contributionAssetFrom(asset);
   const currency = payAsset ? currencyOf(payAsset) : 'USDC';
-  const assetLoaded = payAsset !== null;
+  const hasNoUSDC = !isLoading && !payAsset;
 
   const amountNumber = Number(amount);
   const overBalance = balance !== null && amountNumber > Number(balance);
@@ -52,11 +65,11 @@ export function ContributeButton({
         const poolRes = await fetch(`/api/pools/${poolId}`);
         if (!poolRes.ok) throw new Error("No se pudo verificar el estado del pool");
         const currentPool = await poolRes.json();
-        
+
         if (currentPool.status === 'closed') {
           throw new Error("El pool ya ha sido cerrado por el organizador o alcanzó su meta.");
         }
-        
+
         const remaining = Number(currentPool.goalAmount) - Number(currentPool.total);
         if (amountNumber > remaining) {
           throw new Error(`El monto excede lo que falta para la meta (${remaining} ${currency}).`);
@@ -126,15 +139,16 @@ export function ContributeButton({
 
   let buttonText = `Contribuir ${amount || '0'} ${currency}`;
   if (!isAuthenticated) buttonText = "Inicia sesión para contribuir";
-  if (!assetLoaded) buttonText = "Cargando balance USDC...";
-  if (step === "processing") buttonText = "Procesando...";
+  else if (isLoading) buttonText = "Esperando tu saldo USDC...";
+  else if (hasNoUSDC) buttonText = "Tu cuenta no tiene fondos en USDC";
+  else if (step === "processing") buttonText = "Procesando...";
 
   return (
     <div className="flex flex-col gap-2 w-full">
       <Button
         onClick={() => setStep("confirming")}
-        disabled={disabled || !isAuthenticated || !verified || !assetLoaded || overBalance || overMax || step === "processing" || amountNumber <= 0 || isNaN(amountNumber)}
-        loading={step === "processing"}
+        disabled={disabled || !isAuthenticated || !verified || isLoading || hasNoUSDC || overBalance || overMax || step === "processing" || amountNumber <= 0 || isNaN(amountNumber)}
+        loading={step === "processing" || isLoading}
         className="w-full"
       >
         {buttonText}

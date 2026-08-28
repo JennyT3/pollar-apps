@@ -11,12 +11,12 @@ export type PaymentResult = Extract<
 >;
 
 /**
- * The asset a payment should use: the app's primary asset from useBalance().
- * Returns null if USDC hasn't loaded yet — callers must NOT proceed with payment.
+ * The asset a payment should use: the app's primary asset from useBalance(),
+ * falling back to native XLM while the balance hasn't loaded yet.
  */
 export function paymentAssetFrom(
   record: WalletBalanceRecord | null
-): PaymentAsset | null {
+): PaymentAsset {
   if (
     record &&
     (record.type === "credit_alphanum4" || record.type === "credit_alphanum12") &&
@@ -24,7 +24,7 @@ export function paymentAssetFrom(
   ) {
     return { type: record.type, code: record.code, issuer: record.issuer };
   }
-  return null;
+  return { type: "native" };
 }
 
 export function currencyOf(asset: PaymentAsset): string {

@@ -24,7 +24,7 @@ describe('GET /api/user/pools', () => {
 
   it('should return organized and contributed pools for the specified user', async () => {
     const mockAddress = 'GDF5YAFNPG3I7YSPLOSCP5WZINDYZFBWDS35KCJNPXX5D4SCNTG67ZM4';
-    
+
     const mockOrganized = [{ id: 'pool-1' }];
     const mockContributed = [{ id: 'pool-2' }];
 

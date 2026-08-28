@@ -45,7 +45,7 @@ export function ContributionList({ contributions, currency = "USDC" }: Contribut
 
   return (
     <div>
-      <h3 className="text-lg font-semibold mb-4 text-foreground">Historial</h3>
+      <h3 className="text-xl font-bold mb-4 text-foreground tracking-tight">Contribuciones recientes</h3>
       <div className="space-y-3">
         {contributions.map((c) => {
           const explorerUrl = `${STELLAR_EXPERT_URL}/tx/${c.txHash}`;

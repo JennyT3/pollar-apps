@@ -1,5 +1,5 @@
-import { eq, and, sum, desc, inArray, lt } from 'drizzle-orm';
-import { db } from '../db/client';
+import { eq, and, sum, desc, inArray } from 'drizzle-orm';
+import { db, initLocalDb } from '../db/client';
 import { pools, contributions } from '../db/schema';
 import { nanoid } from 'nanoid';
 
@@ -13,6 +13,7 @@ export async function createPool(data: {
   organizerAddress: string;
   organizerUserId: string;
 }) {
+  await initLocalDb();
   const [newPool] = await db
     .insert(pools)
     .values({
@@ -29,6 +30,7 @@ export async function createPool(data: {
 }
 
 export async function getPool(id: string) {
+  await initLocalDb();
   const [pool] = await db.select().from(pools).where(eq(pools.id, id));
   return pool || null;
 }
@@ -42,6 +44,7 @@ export type PoolWithTotal = Pool & {
 export type PoolPublicView = Omit<PoolWithTotal, 'organizerUserId'>;
 
 export function toPublicPool(pool: PoolWithTotal): PoolPublicView {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { organizerUserId, ...publicPool } = pool;
   return publicPool;
 }
@@ -51,7 +54,7 @@ export async function getPoolWithTotal(id: string): Promise<PoolWithTotal | null
   if (!pool) return null;
 
   if (pool.status !== 'closed' && pool.deadline && new Date() > new Date(pool.deadline)) {
-    await updatePoolStatus(id, 'closed');
+
     pool.status = 'closed';
   }
 
@@ -94,6 +97,7 @@ export async function getPoolWithTotal(id: string): Promise<PoolWithTotal | null
 }
 
 export async function updatePoolStatus(id: string, status: 'open' | 'closed') {
+  await initLocalDb();
   const [updatedPool] = await db
     .update(pools)
     .set({ status })
@@ -103,6 +107,7 @@ export async function updatePoolStatus(id: string, status: 'open' | 'closed') {
 }
 
 export async function getUserOrganizedPools(address: string): Promise<PoolPublicView[]> {
+  await initLocalDb();
   const userPools = await db
     .select()
     .from(pools)
@@ -116,6 +121,7 @@ export async function getUserOrganizedPools(address: string): Promise<PoolPublic
 }
 
 export async function getUserContributedPools(address: string): Promise<PoolPublicView[]> {
+  await initLocalDb();
   const userContributions = await db
     .select({ poolId: contributions.poolId })
     .from(contributions)
@@ -142,14 +148,3 @@ export async function getUserContributedPools(address: string): Promise<PoolPubl
   return enriched.filter((p): p is PoolWithTotal => p !== null).map(toPublicPool);
 }
 
-export async function syncExpiredPools() {
-  await db
-    .update(pools)
-    .set({ status: 'closed' })
-    .where(
-      and(
-        eq(pools.status, 'open'),
-        lt(pools.deadline, new Date())
-      )
-    );
-}
