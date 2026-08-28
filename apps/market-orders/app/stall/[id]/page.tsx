@@ -36,8 +36,11 @@ export default function StallPage({ params }: { params: Promise<{ id: string }> 
   const { id } = use(params);
   const { user } = usePollarAuth();
   const { runTx } = usePollar();
-  const { balance } = useBalance();
+  const { assets } = useBalance();
   const { payAsset, ready } = useUsdcAsset();
+  // Show the USDC balance only, never the primary record (which would fall
+  // back to native XLM and be mislabeled). `assets` is the SDK's full list.
+  const usdcBalance = assets.find((b) => b.code === "USDC")?.balance ?? null;
   // This app is USDC-only; the amount shown is always in USDC even while the
   // wallet's asset list is still loading.
   const currency = "USDC";
@@ -273,9 +276,9 @@ export default function StallPage({ params }: { params: Promise<{ id: string }> 
               <div className="mt-2 border-t border-border pt-2 font-bold">
                 Total: {total} {currency}
               </div>
-              {user && balance !== null && (
+              {user && usdcBalance !== null && (
                 <p className="mt-1 text-sm text-muted">
-                  Tu saldo: {formatAmount(balance)} {currency}
+                  Tu saldo: {formatAmount(usdcBalance)} {currency}
                 </p>
               )}
             </Card>
@@ -322,9 +325,9 @@ export default function StallPage({ params }: { params: Promise<{ id: string }> 
             <div className="mt-2 border-t border-border pt-2 font-bold">
               Total: {total} {currency}
             </div>
-            {user && balance !== null && (
+            {user && usdcBalance !== null && (
               <p className="mt-1 text-sm text-muted">
-                Tu saldo: {formatAmount(balance)} {currency}
+                Tu saldo: {formatAmount(usdcBalance)} {currency}
               </p>
             )}
           </Card>
