@@ -1,4 +1,4 @@
-import { eq, and, sum, desc, inArray } from 'drizzle-orm';
+import { eq, and, sum, desc, inArray, lt } from 'drizzle-orm';
 import { db } from '../db/client';
 import { pools, contributions } from '../db/schema';
 import { nanoid } from 'nanoid';
@@ -39,9 +39,21 @@ export type PoolWithTotal = Pool & {
   contributions: typeof contributions.$inferSelect[];
 };
 
+export type PoolPublicView = Omit<PoolWithTotal, 'organizerUserId'>;
+
+export function toPublicPool(pool: PoolWithTotal): PoolPublicView {
+  const { organizerUserId, ...publicPool } = pool;
+  return publicPool;
+}
+
 export async function getPoolWithTotal(id: string): Promise<PoolWithTotal | null> {
   const pool = await getPool(id);
   if (!pool) return null;
+
+  if (pool.status !== 'closed' && pool.deadline && new Date() > new Date(pool.deadline)) {
+    await updatePoolStatus(id, 'closed');
+    pool.status = 'closed';
+  }
 
   const [{ totalAmount }] = await db
     .select({ totalAmount: sum(contributions.amount) })
@@ -90,7 +102,7 @@ export async function updatePoolStatus(id: string, status: 'open' | 'closed') {
   return updatedPool || null;
 }
 
-export async function getUserOrganizedPools(address: string): Promise<PoolWithTotal[]> {
+export async function getUserOrganizedPools(address: string): Promise<PoolPublicView[]> {
   const userPools = await db
     .select()
     .from(pools)
@@ -100,10 +112,10 @@ export async function getUserOrganizedPools(address: string): Promise<PoolWithTo
   const enriched = await Promise.all(
     userPools.map((p) => getPoolWithTotal(p.id))
   );
-  return enriched.filter((p): p is PoolWithTotal => p !== null);
+  return enriched.filter((p): p is PoolWithTotal => p !== null).map(toPublicPool);
 }
 
-export async function getUserContributedPools(address: string): Promise<PoolWithTotal[]> {
+export async function getUserContributedPools(address: string): Promise<PoolPublicView[]> {
   const userContributions = await db
     .select({ poolId: contributions.poolId })
     .from(contributions)
@@ -127,5 +139,17 @@ export async function getUserContributedPools(address: string): Promise<PoolWith
   const enriched = await Promise.all(
     contributedPools.map((p) => getPoolWithTotal(p.id))
   );
-  return enriched.filter((p): p is PoolWithTotal => p !== null);
+  return enriched.filter((p): p is PoolWithTotal => p !== null).map(toPublicPool);
+}
+
+export async function syncExpiredPools() {
+  await db
+    .update(pools)
+    .set({ status: 'closed' })
+    .where(
+      and(
+        eq(pools.status, 'open'),
+        lt(pools.deadline, new Date())
+      )
+    );
 }

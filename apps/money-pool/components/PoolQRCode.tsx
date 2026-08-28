@@ -8,10 +8,9 @@ interface PoolQRCodeProps {
   poolId: string;
   baseUrl?: string;
   amount?: string;
-  size?: number;
 }
 
-export function PoolQRCode({ mode, poolId, baseUrl, amount, size = 200 }: PoolQRCodeProps) {
+export function PoolQRCode({ mode, poolId, baseUrl, amount }: PoolQRCodeProps) {
   const [currentBaseUrl, setCurrentBaseUrl] = useState(baseUrl || '');
 
   useEffect(() => {
@@ -24,7 +23,7 @@ export function PoolQRCode({ mode, poolId, baseUrl, amount, size = 200 }: PoolQR
   }, [currentBaseUrl]);
 
   if (!currentBaseUrl) {
-    return <div style={{ width: size, height: size }} className="bg-gray-100 animate-pulse rounded-md m-4"></div>;
+    return <div className="w-32 md:w-40 aspect-square bg-muted/20 animate-pulse rounded-xl m-4"></div>;
   }
 
   let url = `${currentBaseUrl}/pool/${poolId}`;
@@ -36,9 +35,12 @@ export function PoolQRCode({ mode, poolId, baseUrl, amount, size = 200 }: PoolQR
   }
 
   return (
-    <div className="flex flex-col items-center gap-2">
-      <div className="bg-white p-3 rounded-xl shadow-sm border border-gray-100">
-        <QRCodeSVG value={url} size={size} />
+    <div className="flex flex-col items-center gap-2 w-full">
+      <div className="w-32 md:w-40 aspect-square bg-white p-3 rounded-xl flex items-center justify-center">
+        <QRCodeSVG
+          value={url}
+          style={{ width: "100%", height: "100%" }}
+        />
       </div>
     </div>
   );

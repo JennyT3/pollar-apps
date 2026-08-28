@@ -19,7 +19,7 @@ export function ProgressBar({
   const isComplete = percentage >= 100;
 
   return (
-    <div className="w-full max-w-md mx-auto my-6 p-6 bg-surface rounded-2xl shadow-sm border border-border">
+    <div className="w-full bg-surface rounded-2xl p-6 shadow-sm border border-border">
       <div className="flex justify-between items-baseline mb-4">
         <div className="flex items-baseline gap-1">
           <span className="text-3xl font-bold text-foreground tracking-tight">

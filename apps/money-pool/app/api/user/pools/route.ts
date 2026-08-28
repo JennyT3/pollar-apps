@@ -1,18 +1,16 @@
 import { NextResponse } from 'next/server';
-import { getUserOrganizedPools, getUserContributedPools } from '../../../../lib/pools';
+import { getUserOrganizedPools, getUserContributedPools, syncExpiredPools } from '../../../../lib/pools';
 
 export async function GET(request: Request) {
-  if (request.headers.get('x-app-request') !== 'true') {
-    return NextResponse.json({ error: 'Unauthorized request' }, { status: 401 });
-  }
-
   try {
     const { searchParams } = new URL(request.url);
     const address = searchParams.get('address');
 
-    if (!address) {
-      return NextResponse.json({ error: 'Address is required' }, { status: 400 });
+    if (!address || !/^G[A-Z2-7]{55}$/.test(address)) {
+      return NextResponse.json({ error: 'Dirección inválida' }, { status: 400 });
     }
+
+    await syncExpiredPools();
 
     const [organized, contributed] = await Promise.all([
       getUserOrganizedPools(address),

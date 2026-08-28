@@ -43,7 +43,7 @@ export default function ContributePage({
   const [registerError, setRegisterError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch(`/api/pools/${id}`, { headers: { 'x-app-request': 'true' } })
+    fetch(`/api/pools/${id}`)
       .then(res => {
         if (!res.ok) {
           if (res.status === 404) notFound();
@@ -67,7 +67,7 @@ export default function ContributePage({
     try {
       const res = await fetch(`/api/pools/${id}/contributions`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-app-request': 'true' },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           amount: amount,
           txHash: result.hash,
@@ -99,7 +99,7 @@ export default function ContributePage({
 
   if (successHash) {
     return (
-      <div className="max-w-md mx-auto mt-10 p-4">
+      <main className="mx-auto flex w-full max-w-md flex-1 flex-col gap-6 px-4 py-8 lg:max-w-lg lg:py-12">
         <Card className="p-8 flex flex-col items-center text-center">
           <div className="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center text-3xl mb-4">
             <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>
@@ -120,7 +120,7 @@ export default function ContributePage({
             Ver el pool
           </Button>
         </Card>
-      </div>
+      </main>
     );
   }
 
@@ -129,7 +129,7 @@ export default function ContributePage({
   const maxAllowed = parseFloat(pool.goalAmount) - parseFloat(pool.total || '0');
 
   return (
-    <div className="max-w-md mx-auto mt-10 p-4 pb-24">
+    <main className="mx-auto flex w-full max-w-md flex-1 flex-col gap-6 px-4 py-8 pb-24 lg:max-w-lg lg:py-12 lg:pb-28">
       <div className="flex justify-start items-center mb-6">
         <Link href={`/pool/${pool.id}`} className="inline-flex items-center text-sm font-medium text-muted hover:text-primary transition-colors">
           <svg className="w-4 h-4 mr-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -229,6 +229,6 @@ export default function ContributePage({
         )}
       </Card>
       {user && <BottomNav />}
-    </div>
+    </main>
   );
 }

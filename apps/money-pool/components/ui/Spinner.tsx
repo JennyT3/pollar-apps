@@ -8,7 +8,7 @@ export function Spinner({
 }) {
   return (
     <svg
-      className={`animate-spin ${className}`}
+      className={`animate-spin [animation-duration:1.1s] ${className}`}
       width={size}
       height={size}
       viewBox="0 0 24 24"

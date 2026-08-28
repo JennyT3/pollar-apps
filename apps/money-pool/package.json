@@ -14,9 +14,12 @@
     "db:migrate": "drizzle-kit migrate"
   },
   "dependencies": {
+    "@libsql/client": "^0.17.4",
     "@neondatabase/serverless": "^1.1.0",
     "@pollar/core": "^0.11.2",
     "@pollar/react": "^0.11.2",
+    "@stellar/stellar-sdk": "^17.0.1",
+    "better-sqlite3": "^13.0.3",
     "drizzle-orm": "^0.45.2",
     "nanoid": "^3.3.18",
     "next": "16.3.1",
@@ -26,6 +29,7 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
+    "@types/better-sqlite3": "^9.6.0",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
@@ -37,5 +41,15 @@
     "typescript": "^5",
     "vitest": "^4.1.11"
   },
-  "packageManager": "pnpm@10.23.0"
+  "packageManager": "pnpm@10.23.0",
+  "pnpm": {
+    "overrides": {
+      "drizzle-orm": "^0.45.2"
+    },
+    "ignoredBuiltDependencies": [
+      "better-sqlite3",
+      "esbuild",
+      "unrs-resolver"
+    ]
+  }
 }

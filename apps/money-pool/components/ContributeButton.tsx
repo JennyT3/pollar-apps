@@ -33,15 +33,38 @@ export function ContributeButton({
   const [errorMessage, setErrorMessage] = useState<string>("");
 
   const payAsset = paymentAssetFrom(asset);
-  const currency = currencyOf(payAsset);
+  const currency = payAsset ? currencyOf(payAsset) : 'USDC';
+  const assetLoaded = payAsset !== null;
 
   const amountNumber = Number(amount);
   const overBalance = balance !== null && amountNumber > Number(balance);
   const overMax = maxAllowed !== undefined && amountNumber > maxAllowed;
 
   async function pay() {
+    if (!payAsset) {
+      setErrorMessage("USDC balance not loaded yet. Please wait.");
+      setStep("error");
+      return;
+    }
     setStep("processing");
     try {
+      try {
+        const poolRes = await fetch(`/api/pools/${poolId}`);
+        if (!poolRes.ok) throw new Error("No se pudo verificar el estado del pool");
+        const currentPool = await poolRes.json();
+        
+        if (currentPool.status === 'closed') {
+          throw new Error("El pool ya ha sido cerrado por el organizador o alcanzó su meta.");
+        }
+        
+        const remaining = Number(currentPool.goalAmount) - Number(currentPool.total);
+        if (amountNumber > remaining) {
+          throw new Error(`El monto excede lo que falta para la meta (${remaining} ${currency}).`);
+        }
+      } catch (checkErr) {
+        throw checkErr;
+      }
+
       const result = await runTx(
         "payment",
         { destination: organizerAddress, amount, asset: payAsset },
@@ -103,13 +126,14 @@ export function ContributeButton({
 
   let buttonText = `Contribuir ${amount || '0'} ${currency}`;
   if (!isAuthenticated) buttonText = "Inicia sesión para contribuir";
+  if (!assetLoaded) buttonText = "Cargando balance USDC...";
   if (step === "processing") buttonText = "Procesando...";
 
   return (
     <div className="flex flex-col gap-2 w-full">
       <Button
         onClick={() => setStep("confirming")}
-        disabled={disabled || !isAuthenticated || !verified || overBalance || overMax || step === "processing" || amountNumber <= 0 || isNaN(amountNumber)}
+        disabled={disabled || !isAuthenticated || !verified || !assetLoaded || overBalance || overMax || step === "processing" || amountNumber <= 0 || isNaN(amountNumber)}
         loading={step === "processing"}
         className="w-full"
       >

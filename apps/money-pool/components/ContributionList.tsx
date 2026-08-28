@@ -37,14 +37,14 @@ export function ContributionList({ contributions, currency = "USDC" }: Contribut
 
   if (contributions.length === 0) {
     return (
-      <div className="mt-6 border border-dashed border-border rounded-xl">
+      <div className="border border-dashed border-border rounded-xl">
         <EmptyState title="Aún no hay contribuciones." description="¡Sé el primero!" />
       </div>
     );
   }
 
   return (
-    <div className="mt-8">
+    <div>
       <h3 className="text-lg font-semibold mb-4 text-foreground">Historial</h3>
       <div className="space-y-3">
         {contributions.map((c) => {

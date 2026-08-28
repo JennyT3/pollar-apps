@@ -40,7 +40,7 @@ export function SendModal({
   const [result, setResult] = useState<PaymentResult | null>(null);
 
   const payAsset = paymentAssetFrom(asset);
-  const currency = currencyOf(payAsset);
+  const currency = payAsset ? currencyOf(payAsset) : "";
 
   // Fresh flow every time the sheet opens (state-adjust-during-render pattern).
   const [prevOpen, setPrevOpen] = useState(open);
@@ -68,6 +68,7 @@ export function SendModal({
     setSending(true);
     setError(null);
     try {
+      if (!payAsset) return;
       const res = await runTx(
         "payment",
         { destination: recipient.trim(), amount, asset: payAsset },
@@ -76,8 +77,8 @@ export function SendModal({
       if (res.status === "error") {
         setError(
           res.message ??
-            res.details ??
-            "The payment didn't go through. Check the address and your balance, then try again."
+          res.details ??
+          "The payment didn't go through. Check the address and your balance, then try again."
         );
       } else {
         setResult(res);
@@ -145,7 +146,7 @@ export function SendModal({
           )}
           <Button
             onClick={() => setStep("details")}
-            disabled={!amountValid}
+            disabled={!amountValid || !payAsset}
             className="w-full py-3"
           >
             Continue
@@ -234,11 +235,10 @@ export function SendModal({
         <div className="flex flex-col gap-4">
           <EmptyState
             title="Payment sent!"
-            description={`${amount} ${currency} went to ${middleTruncate(recipient.trim(), 6, 6)}. ${
-              result.status === "pending"
+            description={`${amount} ${currency} went to ${middleTruncate(recipient.trim(), 6, 6)}. ${result.status === "pending"
                 ? "It settles in a few seconds."
                 : "It's confirmed on the network."
-            } Your balance is already up to date.`}
+              } Your balance is already up to date.`}
           />
           <Button onClick={onClose} variant="secondary" className="w-full py-3">
             Done

@@ -11,10 +11,10 @@ import { BottomNav } from "@/components/BottomNav";
 function PoolCard({ pool, isClosed }: { pool: PoolWithTotal; isClosed: boolean }) {
   const formattedTotal = parseFloat(pool.total || "0").toFixed(2);
   const formattedGoal = parseFloat(pool.goalAmount).toFixed(2);
-  
+
   return (
-    <Link 
-      href={`/pool/${pool.id}`} 
+    <Link
+      href={`/pool/${pool.id}`}
       className={`block p-4 border border-border rounded-xl transition-all hover:border-primary/50 hover:shadow-sm ${isClosed ? 'bg-gray-100/50 opacity-80' : 'bg-surface'}`}
     >
       <div className="flex justify-between items-start mb-2">
@@ -33,9 +33,9 @@ function PoolCard({ pool, isClosed }: { pool: PoolWithTotal; isClosed: boolean }
         </div>
       </div>
       <div className="mt-2 h-1.5 w-full bg-gray-200 rounded-full overflow-hidden">
-        <div 
-          className={`h-full ${pool.percentage >= 100 ? 'bg-success' : 'bg-primary'}`} 
-          style={{ width: `${Math.min(100, pool.percentage)}%` }} 
+        <div
+          className={`h-full ${pool.percentage >= 100 ? 'bg-success' : 'bg-primary'}`}
+          style={{ width: `${Math.min(100, pool.percentage)}%` }}
         />
       </div>
     </Link>
@@ -53,9 +53,9 @@ export default function HistoryPage() {
       if (!authLoading) setTimeout(() => setLoading(false), 0);
       return;
     }
-    
+
     setTimeout(() => setLoading(true), 0);
-    fetch(`/api/user/pools?address=${user.address}`, { headers: { 'x-app-request': 'true' } })
+    fetch(`/api/user/pools?address=${user.address}`)
       .then(res => res.json())
       .then(data => {
         if (data.organized) setOrganized(data.organized);
@@ -105,7 +105,6 @@ export default function HistoryPage() {
         </div>
       ) : (
         <div className="flex flex-col gap-8">
-          {/* Mis Pools */}
           <section>
             <h3 className="text-sm font-semibold text-muted uppercase tracking-wider mb-4">Mis Pools</h3>
             {organized.length === 0 ? (
@@ -121,7 +120,6 @@ export default function HistoryPage() {
             )}
           </section>
 
-          {/* Mis Contribuciones */}
           <section>
             <h3 className="text-sm font-semibold text-muted uppercase tracking-wider mb-4">Mis Contribuciones</h3>
             {contributed.length === 0 ? (

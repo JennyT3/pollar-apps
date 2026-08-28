@@ -2,9 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { usePollarAuth } from "@/hooks/usePollarAuth";
 
 export function BottomNav() {
   const pathname = usePathname();
+  const { user } = usePollarAuth();
+
+  if (!user) return null;
 
   return (
     <div className="fixed bottom-0 left-0 w-full bg-surface border-t border-border z-50">
