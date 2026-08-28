@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { apiRoute } from "@/lib/api";
 import { createSplit, listSplitsByCollector } from "@/lib/db";
 import { looksLikeAddress } from "@/lib/payments";
+import { TESTNET_USDC } from "@/lib/split";
 
 const AMOUNT_RE = /^\d+(\.\d{1,2})?$/;
 
@@ -29,10 +30,8 @@ export const POST = apiRoute(async (req: NextRequest) => {
     typeof totalAmount !== "string" ||
     !AMOUNT_RE.test(totalAmount) ||
     Number(totalAmount) <= 0 ||
-    typeof assetCode !== "string" ||
-    !assetCode ||
-    typeof assetIssuer !== "string" ||
-    !assetIssuer ||
+    assetCode !== TESTNET_USDC.code ||
+    assetIssuer !== TESTNET_USDC.issuer ||
     typeof collectorAddress !== "string" ||
     !looksLikeAddress(collectorAddress) ||
     !Array.isArray(participants) ||

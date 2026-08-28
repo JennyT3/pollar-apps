@@ -34,37 +34,45 @@ cp .env.example .env
 Paste your Pollar publishable key into `.env` — get it at
 [dashboard.pollar.xyz](https://dashboard.pollar.xyz) under **Build → API
 Keys → Generate** (type: Publishable, `pub_testnet_…` while developing).
-
-You also need a database connection string — see **Database** below,
-it's a two-minute signup.
+That's the only required value.
 
 ```bash
 pnpm install
 pnpm dev
 ```
 
-Log in, hit **+ New split**, and go.
+Log in, hit **+ New split**, and go — no database account needed to run
+this locally, see **Database** below.
 
 ## Database
 
-Splits and their participants live in Postgres, via
-[Neon](https://neon.tech) and its serverless HTTP driver
-(`@neondatabase/serverless`) — no connection pool to manage, which is what
-makes it work cleanly on serverless hosting (a plain local SQLite file
-doesn't survive between invocations there). The same `DATABASE_URL` is used
-locally and in production — no separate driver, no migration step, no local
-file to keep track of.
+Splits and their participants live behind one small interface
+(`lib/db.ts`), backed by two interchangeable drivers, same schema either
+way:
 
-1. Sign up at [neon.tech](https://neon.tech) (free tier is plenty) and
-   create a project.
-2. Copy its connection string from the dashboard (**Connection string**,
-   looks like `postgresql://user:password@host/dbname?sslmode=require`).
-3. Paste it as `DATABASE_URL` in `.env` (locally) and in your deploy
-   environment's variables (production).
+- **Local dev (default)**: no configuration needed. A local SQLite file at
+  `data/bill-split.db` (via `@libsql/client`, the same dialect Turso
+  speaks), created automatically the first time the app touches the
+  database.
+- **Production**: a local file doesn't survive on serverless hosting
+  (Vercel's functions have no persistent disk between invocations), so
+  production points at [Neon](https://neon.tech) Postgres instead, via its
+  serverless HTTP driver (`@neondatabase/serverless`) — no connection pool
+  to manage.
+
+Which one runs is decided by a single env var:
+
+1. Leave `DATABASE_URL` unset → local SQLite file. This is the default,
+   and what a fresh clone gets with nothing but the Pollar key in `.env`.
+2. Set `DATABASE_URL` to a Neon connection string (sign up at
+   [neon.tech](https://neon.tech), free tier is plenty, copy **Connection
+   string** from the dashboard — looks like
+   `postgresql://user:password@host/dbname?sslmode=require`) → Postgres.
+   Set this in your deploy environment's variables for production.
 
 The schema (`CREATE TABLE IF NOT EXISTS …`) is applied automatically the
-first time the app touches the database — no manual migration step, in
-either environment.
+first time the app touches the database, whichever driver is active — no
+manual migration step, in either environment.
 
 ## Payment verification
 
@@ -112,6 +120,11 @@ Two QR codes exist in this app, both generated client-side with
   underlying payment loop before the real split flow was built on top of
   it.
 
+Reading one back doesn't depend on the phone's own camera app: **Scan QR**
+on the home page opens the device camera and decodes locally with `jsqr`
+— no upload, no network call — and only ever navigates same-origin. A QR
+that resolves to another domain is refused, not followed.
+
 ## The spike
 
 `/spike` is a minimal, standalone page kept in the repo as the reproducible
@@ -121,13 +134,20 @@ issue required before the full build. It's linked from the home page
 footer. It doesn't use the database; it's a plain payment test, independent
 of the split flow above.
 
+**Spike result:** a real testnet payment triggered by opening a QR-encoded
+link, hash
+[`618e0ba56f8117bf954993d431c113e6fe55a7c59bea8f239c523623d617b95d`](https://stellar.expert/explorer/testnet/tx/618e0ba56f8117bf954993d431c113e6fe55a7c59bea8f239c523623d617b95d),
+confirmed successful directly against Horizon.
+
 ## Tech stack
 
 - Next.js 16 (App Router), React 19, TypeScript 5, Tailwind 4
 - `@pollar/react` / `@pollar/core` for auth, balance and payments — never
   reimplemented, always the SDK's own `runTx`
-- `@neondatabase/serverless` for persistence (Postgres, via Neon)
-- `qrcode.react` for QR generation
+- `@libsql/client` (local SQLite) / `@neondatabase/serverless` (Postgres,
+  via Neon) for persistence — see **Database** above
+- `@stellar/stellar-base` to verify SEP-53 signatures server-side
+- `qrcode.react` for QR generation, `jsqr` for the in-app scanner
 
 ## Deploy
 

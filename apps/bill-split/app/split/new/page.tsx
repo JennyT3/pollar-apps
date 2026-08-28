@@ -9,9 +9,7 @@ import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { PollarLogo } from "@/components/ui/PollarLogo";
 import { usePollarAuth } from "@/hooks/usePollarAuth";
-import { useBalance } from "@/hooks/useBalance";
-import { currencyOf, paymentAssetFrom } from "@/lib/payments";
-import { computeEqualShares } from "@/lib/split";
+import { computeEqualShares, TESTNET_USDC } from "@/lib/split";
 
 interface ParticipantDraft {
   label: string;
@@ -20,11 +18,8 @@ interface ParticipantDraft {
 
 export default function NewSplitPage() {
   const { user } = usePollarAuth();
-  const { asset } = useBalance();
   const router = useRouter();
-
-  const payAsset = paymentAssetFrom(asset);
-  const currency = currencyOf(payAsset);
+  const currency = TESTNET_USDC.code;
 
   const [description, setDescription] = useState("");
   const [totalAmount, setTotalAmount] = useState("");
@@ -106,8 +101,8 @@ export default function NewSplitPage() {
         body: JSON.stringify({
           description: description.trim(),
           totalAmount,
-          assetCode: currency,
-          assetIssuer: payAsset.type === "native" ? "native" : payAsset.issuer,
+          assetCode: TESTNET_USDC.code,
+          assetIssuer: TESTNET_USDC.issuer,
           collectorAddress: user.address,
           participants: participants.map((p, i) => ({
             label: p.label.trim(),

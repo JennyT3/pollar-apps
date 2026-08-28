@@ -1,5 +1,15 @@
 import type { PaymentAsset } from "@/lib/payments";
 
+/**
+ * Every split settles in this asset, always — not whatever the collector's
+ * wallet happens to hold at creation time (their balance is irrelevant:
+ * they don't pay anything to create a split, only participants do).
+ */
+export const TESTNET_USDC = {
+  code: "USDC",
+  issuer: "GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5",
+} as const;
+
 export interface Split {
   id: string;
   shortRef: string;

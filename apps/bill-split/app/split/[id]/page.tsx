@@ -12,6 +12,7 @@ import { PollarLogo } from "@/components/ui/PollarLogo";
 import { useIsClient } from "@/hooks/useIsClient";
 import { usePollarAuth } from "@/hooks/usePollarAuth";
 import { formatAmount, middleTruncate } from "@/lib/format";
+import { closeMessage } from "@/lib/sep53";
 import { assetFromSplit, type Split, type SplitParticipant } from "@/lib/split";
 import { QRCodeSVG } from "qrcode.react";
 
@@ -141,7 +142,7 @@ export default function SplitPage() {
       </div>
 
       {isCollector && split.status === "open" && (
-        <CloseButton splitId={split.id} collectorAddress={user.address} onClosed={refresh} />
+        <CloseButton splitId={split.id} onClosed={refresh} />
       )}
     </main>
   );
@@ -312,13 +313,12 @@ function ParticipantRow({
 
 function CloseButton({
   splitId,
-  collectorAddress,
   onClosed,
 }: {
   splitId: string;
-  collectorAddress: string;
   onClosed: () => void;
 }) {
+  const { getClient } = usePollar();
   const [closing, setClosing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -326,10 +326,25 @@ function CloseButton({
     setClosing(true);
     setError(null);
     try {
+      const timestamp = Date.now();
+      const proof = await getClient().stellar.sep53.signMessage(
+        closeMessage(splitId, timestamp)
+      );
+      if (proof.status === "error") {
+        throw new Error(
+          proof.details ??
+            "Your wallet can't sign this. Passkey wallets don't support closing manually — the split still closes on its own once everyone pays."
+        );
+      }
+
       const res = await fetch(`/api/splits/${splitId}/close`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ collectorAddress }),
+        body: JSON.stringify({
+          signerAddress: proof.signerAddress,
+          signature: proof.signature,
+          timestamp,
+        }),
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));

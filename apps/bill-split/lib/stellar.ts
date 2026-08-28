@@ -7,6 +7,7 @@ interface HorizonOperation {
   amount?: string;
   asset_code?: string;
   asset_issuer?: string;
+  transaction?: { successful?: boolean };
 }
 
 /**
@@ -18,6 +19,11 @@ interface HorizonOperation {
  * take a *real* hash belonging to a different payment (any payment to the
  * same collector, in the same asset, for enough) and claim it under a
  * different `payerAddress` than whoever actually sent it.
+ *
+ * `join=transactions` embeds each operation's parent transaction so
+ * `successful` can be checked explicitly, in the same round trip — Horizon
+ * hides failed-transaction operations by default, which is why this worked
+ * even without the check, but relying on that silently is fragile.
  */
 export async function verifyPayment(
   hash: string,
@@ -31,7 +37,9 @@ export async function verifyPayment(
 ): Promise<boolean> {
   let operations: HorizonOperation[];
   try {
-    const res = await fetch(`${HORIZON_TESTNET}/transactions/${hash}/operations`);
+    const res = await fetch(
+      `${HORIZON_TESTNET}/transactions/${hash}/operations?join=transactions`
+    );
     if (!res.ok) return false;
     const data = await res.json();
     operations = data._embedded?.records ?? [];
@@ -42,6 +50,7 @@ export async function verifyPayment(
   return operations.some(
     (op) =>
       op.type === "payment" &&
+      op.transaction?.successful === true &&
       op.from === expected.from &&
       op.to === expected.to &&
       op.asset_code === expected.assetCode &&
