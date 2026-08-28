@@ -14,8 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Pollar App",
-  description: "Built with the Pollar SDK",
+  title: "Market Orders",
+  description: "Pedidos por adelantado a tu casera: pedí, pagá en USDC y retirá sin fila.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

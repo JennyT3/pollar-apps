@@ -6,10 +6,14 @@ import { PollarLogo } from "@/components/ui/PollarLogo";
 import { useBalance } from "@/hooks/useBalance";
 import { formatAmount } from "@/lib/format";
 
+/** The wallet card: the app's primary balance on a branded Pollar-blue card. */
 export function BalanceCard() {
   const { balance, currency, isLoading, error, refresh } = useBalance();
   const { isAuthenticated, tx } = usePollar();
 
+  // `tx` is the SDK's global transaction state machine, so this catches every
+  // payment made anywhere in the app (PayButton, Pollar's send modal, …).
+  // 'submitted' covers payments the network accepted but hasn't confirmed yet.
   useEffect(() => {
     if (tx.step === "success" || tx.step === "submitted") {
       void refresh();
@@ -20,6 +24,7 @@ export function BalanceCard() {
 
   return (
     <section className="relative w-full overflow-hidden rounded-2xl bg-primary p-6 text-primary-foreground shadow-md">
+      {/* subtle brand watermark */}
       <div className="pointer-events-none absolute -right-4 -bottom-6">
         <PollarLogo size={120} colorClass="bg-primary-foreground/10" />
       </div>

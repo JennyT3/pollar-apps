@@ -6,27 +6,34 @@ export async function GET(req: NextRequest) {
   const address = req.nextUrl.searchParams.get("address");
   const id = req.nextUrl.searchParams.get("id");
 
-  let stall;
-  if (id) {
-    stall = await prisma.stall.findUnique({
-      where: { id },
-      include: { items: true },
-    });
-  } else if (address) {
-    stall = await prisma.stall.findUnique({
-      where: { ownerAddress: address },
-      include: { items: true },
-    });
-  } else {
-    return NextResponse.json({ error: "address or id required" }, { status: 400 });
-  }
+  try {
+    let stall;
+    if (id) {
+      stall = await prisma.stall.findUnique({
+        where: { id },
+        include: { items: true },
+      });
+    } else if (address) {
+      stall = await prisma.stall.findUnique({
+        where: { ownerAddress: address },
+        include: { items: true },
+      });
+    } else {
+      return NextResponse.json({ error: "address or id required" }, { status: 400 });
+    }
 
-  if (!stall) {
-    return NextResponse.json({ error: "stall not found" }, { status: 404 });
+    if (!stall) {
+      return NextResponse.json({ error: "stall not found" }, { status: 404 });
+    }
+    const { ownerTokenHash, ...publicStall } = stall;
+    void ownerTokenHash;
+    return NextResponse.json(publicStall);
+  } catch (e) {
+    // A cold-start DB connection (e.g. Turso in production) hiccuping must
+    // return a JSON error, not crash the page.
+    console.error("GET /api/stall failed", e);
+    return NextResponse.json({ error: "database_unavailable" }, { status: 500 });
   }
-  const { ownerTokenHash, ...publicStall } = stall;
-  void ownerTokenHash;
-  return NextResponse.json(publicStall);
 }
 
 export async function POST(req: NextRequest) {

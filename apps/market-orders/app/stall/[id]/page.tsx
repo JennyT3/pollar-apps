@@ -4,19 +4,25 @@ import { useState, useEffect, use } from "react";
 import { usePollar } from "@pollar/react";
 import { usePollarAuth } from "@/hooks/usePollarAuth";
 import { useBalance } from "@/hooks/useBalance";
+import { useUsdcAsset } from "@/hooks/useUsdcAsset";
 import { LoginButton } from "@/components/LoginButton";
-import { BalanceCard } from "@/components/BalanceCard";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { PollarLogo } from "@/components/ui/PollarLogo";
-import { usdcPaymentAsset, currencyOf } from "@/lib/payments";
+import { formatAmount } from "@/lib/format";
 import { QRCodeSVG } from "qrcode.react";
 
 interface Stall {
   id: string;
   name: string;
   ownerAddress: string;
-  items: { id: string; name: string; price: number; quantity: number; soldOut: boolean }[];
+  items: {
+    id: string;
+    name: string;
+    price: number;
+    quantity: number;
+    soldOut: boolean;
+  }[];
 }
 
 interface CartItem {
@@ -30,9 +36,11 @@ export default function StallPage({ params }: { params: Promise<{ id: string }> 
   const { id } = use(params);
   const { user } = usePollarAuth();
   const { runTx } = usePollar();
-  const { assets } = useBalance();
-  const payAsset = usdcPaymentAsset(assets);
-  const currency = currencyOf(payAsset);
+  const { balance } = useBalance();
+  const { payAsset, ready } = useUsdcAsset();
+  // This app is USDC-only; the amount shown is always in USDC even while the
+  // wallet's asset list is still loading.
+  const currency = "USDC";
 
   const [stall, setStall] = useState<Stall | null>(null);
   const [cart, setCart] = useState<CartItem[]>([]);
@@ -50,14 +58,16 @@ export default function StallPage({ params }: { params: Promise<{ id: string }> 
         if (res.ok && !cancelled) {
           setStall(await res.json());
         }
-      } catch (e) {
-        console.error(e);
+      } catch {
+        // stall not found view below
       } finally {
         if (!cancelled) setLoading(false);
       }
     }
-    load();
-    return () => { cancelled = true; };
+    void load();
+    return () => {
+      cancelled = true;
+    };
   }, [id]);
 
   function add(item: Stall["items"][0]) {
@@ -66,7 +76,11 @@ export default function StallPage({ params }: { params: Promise<{ id: string }> 
       const ex = prev.find((c) => c.menuItemId === item.id);
       const inCart = ex?.qty ?? 0;
       if (inCart >= item.quantity) return prev;
-      if (ex) return prev.map((c) => (c.menuItemId === item.id ? { ...c, qty: c.qty + 1 } : c));
+      if (ex) {
+        return prev.map((c) =>
+          c.menuItemId === item.id ? { ...c, qty: c.qty + 1 } : c
+        );
+      }
       return [...prev, { menuItemId: item.id, name: item.name, price: item.price, qty: 1 }];
     });
   }
@@ -76,14 +90,26 @@ export default function StallPage({ params }: { params: Promise<{ id: string }> 
       const ex = prev.find((c) => c.menuItemId === menuItemId);
       if (!ex) return prev;
       if (ex.qty <= 1) return prev.filter((c) => c.menuItemId !== menuItemId);
-      return prev.map((c) => (c.menuItemId === menuItemId ? { ...c, qty: c.qty - 1 } : c));
+      return prev.map((c) =>
+        c.menuItemId === menuItemId ? { ...c, qty: c.qty - 1 } : c
+      );
     });
   }
 
   const total = cart.reduce((s, i) => s + i.price * i.qty, 0);
 
+  // USDC must be available on THIS account to pay; the server re-checks the
+  // asset and issuer on-chain. Never pay in XLM or another asset.
+  const canPay =
+    user !== null && payAsset !== null && ready && total > 0;
+
   async function pay() {
     if (!user || !stall || total <= 0) return;
+    if (!payAsset) {
+      setErrMsg("Tu cuenta no tiene USDC disponible. Recargá USDC y probá de nuevo.");
+      setStep("error");
+      return;
+    }
     setStep("paying");
     setErrMsg(null);
 
@@ -122,7 +148,7 @@ export default function StallPage({ params }: { params: Promise<{ id: string }> 
       );
 
       if (res.status === "error") {
-        setErrMsg(res.message ?? res.details ?? "Payment failed");
+        setErrMsg(res.message ?? res.details ?? "El pago no se completó");
         setStep("error");
         return;
       }
@@ -138,7 +164,7 @@ export default function StallPage({ params }: { params: Promise<{ id: string }> 
       setStep("done");
       setCart([]);
     } catch (err) {
-      setErrMsg(err instanceof Error ? err.message : "Payment failed");
+      setErrMsg(err instanceof Error ? err.message : "El pago no se completó");
       setStep("error");
     }
   }
@@ -161,26 +187,38 @@ export default function StallPage({ params }: { params: Promise<{ id: string }> 
     );
   }
 
+  const soldOutAll = stall.items.every(
+    (i) => i.soldOut || i.quantity <= 0
+  );
+
   return (
     <main className="mx-auto flex w-full max-w-md flex-1 flex-col gap-4 px-4 py-6 lg:max-w-lg lg:py-10">
       <header className="flex items-center justify-between gap-3 py-2">
         <div className="flex min-w-0 items-center gap-2.5">
           <PollarLogo size={30} />
-          <h1 className="text-xl font-bold tracking-tight">{stall.name}</h1>
+          <h1 className="min-w-0 truncate text-xl font-bold tracking-tight">
+            {stall.name}
+          </h1>
         </div>
         <LoginButton />
       </header>
 
-      {user && <BalanceCard />}
+      {soldOutAll && step === "menu" && (
+        <div className="rounded-2xl border border-warning-border bg-warning-light px-4 py-3 text-sm text-warning">
+          Hoy no quedan productos disponibles. Volvé mañana.
+        </div>
+      )}
 
       {step === "menu" && (
         <>
-          <h2 className="font-semibold">Menu del dia</h2>
+          <h2 className="font-semibold">Menú del día</h2>
           {stall.items.map((item) => (
             <Card key={item.id} className="p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className={`font-medium ${item.soldOut ? "line-through text-muted" : ""}`}>
+                  <p
+                    className={`font-medium ${item.soldOut ? "line-through text-muted" : ""}`}
+                  >
                     {item.name}
                   </p>
                   <p className="font-mono text-sm text-muted">
@@ -192,13 +230,23 @@ export default function StallPage({ params }: { params: Promise<{ id: string }> 
                   <span className="text-xs font-medium text-muted">Agotado</span>
                 ) : (
                   <div className="flex items-center gap-2">
-                    <Button variant="ghost" onClick={() => remove(item.id)} className="h-8 w-8 px-0">
-                      -
+                    <Button
+                      variant="ghost"
+                      onClick={() => remove(item.id)}
+                      className="h-8 w-8 px-0"
+                      aria-label="Quitar uno"
+                    >
+                      −
                     </Button>
                     <span className="w-6 text-center font-mono text-sm">
                       {cart.find((c) => c.menuItemId === item.id)?.qty ?? 0}
                     </span>
-                    <Button variant="ghost" onClick={() => add(item)} className="h-8 w-8 px-0">
+                    <Button
+                      variant="ghost"
+                      onClick={() => add(item)}
+                      className="h-8 w-8 px-0"
+                      aria-label="Agregar uno"
+                    >
                       +
                     </Button>
                   </div>
@@ -223,17 +271,34 @@ export default function StallPage({ params }: { params: Promise<{ id: string }> 
               <div className="mt-2 border-t border-border pt-2 font-bold">
                 Total: {total} {currency}
               </div>
+              {user && balance !== null && (
+                <p className="mt-1 text-sm text-muted">
+                  Tu saldo: {formatAmount(balance)} {currency}
+                </p>
+              )}
             </Card>
           )}
 
           {!user ? (
             <p className="text-center text-sm text-muted">
-              Inicia sesion con Pollar para pagar
+              Iniciá sesión con Pollar para pagar
             </p>
           ) : (
-            <Button onClick={() => setStep("confirm")} disabled={cart.length === 0}>
-              Pagar
-            </Button>
+            <>
+              {ready && !payAsset && (
+                <div className="rounded-2xl border border-warning-border bg-warning-light px-4 py-3 text-sm text-warning">
+                  Tu cuenta todavía no tiene USDC. Este puesto solo acepta
+                  pagos en USDC — recibí USDC en tu cuenta y volvé a intentar.
+                </div>
+              )}
+              <Button
+                onClick={() => setStep("confirm")}
+                disabled={cart.length === 0}
+                className="w-full"
+              >
+                Pagar
+              </Button>
+            </>
           )}
         </>
       )}
@@ -255,12 +320,25 @@ export default function StallPage({ params }: { params: Promise<{ id: string }> 
             <div className="mt-2 border-t border-border pt-2 font-bold">
               Total: {total} {currency}
             </div>
+            {user && balance !== null && (
+              <p className="mt-1 text-sm text-muted">
+                Tu saldo: {formatAmount(balance)} {currency}
+              </p>
+            )}
           </Card>
           <div className="flex gap-2">
-            <Button variant="secondary" onClick={() => setStep("menu")} className="flex-1">
+            <Button
+              variant="secondary"
+              onClick={() => setStep("menu")}
+              className="flex-1"
+            >
               Volver
             </Button>
-            <Button onClick={() => void pay()} className="flex-1">
+            <Button
+              onClick={() => void pay()}
+              className="flex-1"
+              disabled={!canPay}
+            >
               Confirmar pago
             </Button>
           </div>
@@ -289,15 +367,15 @@ export default function StallPage({ params }: { params: Promise<{ id: string }> 
           </div>
           {pickupCode && (
             <Card className="w-full p-4 text-center">
-              <p className="text-sm text-muted">Tu codigo de pickup:</p>
-              <div className="flex justify-center my-4">
+              <p className="text-sm text-muted">Tu código de pickup:</p>
+              <div className="my-4 flex justify-center">
                 <QRCodeSVG value={pickupCode} size={160} />
               </div>
               <p className="font-mono text-3xl font-bold tracking-widest text-primary">
                 {pickupCode}
               </p>
               <p className="mt-2 text-xs text-muted-light">
-                Muestra este codigo o escanea el QR al recoger tu orden
+                Mostrá este código o escaneá el QR al recoger tu orden
               </p>
             </Card>
           )}
@@ -307,7 +385,14 @@ export default function StallPage({ params }: { params: Promise<{ id: string }> 
               <p className="break-all font-mono text-xs">{txHash}</p>
             </Card>
           )}
-          <Button variant="secondary" onClick={() => { setStep("menu"); setTxHash(null); setPickupCode(null); }}>
+          <Button
+            variant="secondary"
+            onClick={() => {
+              setStep("menu");
+              setTxHash(null);
+              setPickupCode(null);
+            }}
+          >
             Nueva orden
           </Button>
         </div>
@@ -327,7 +412,7 @@ export default function StallPage({ params }: { params: Promise<{ id: string }> 
       )}
 
       <p className="mt-auto pt-4 text-center text-xs text-muted-light">
-        {stall.name} · Pagar con Pollar USDC
+        {stall.name} · Pagar con Pollar en USDC
       </p>
     </main>
   );

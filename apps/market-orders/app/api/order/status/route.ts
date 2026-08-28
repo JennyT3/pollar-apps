@@ -79,11 +79,30 @@ async function verifyTx(
   return { ok: true };
 }
 
+/** The only transitions a client can request; everything else stays in code. */
+const ALLOWED_STATUSES = ["paid", "ready", "delivered", "cancelled"] as const;
+type OrderStatus = (typeof ALLOWED_STATUSES)[number];
+
+/** Legal source states for each target. Guards against rollbacks
+ * (e.g. paid → pending) and double transitions (e.g. paid → paid).
+ * Every target except `paid` (the customer reporting payment) requires the
+ * admin token below. */
+const FROM: Record<OrderStatus, string[]> = {
+  paid: ["pending"],
+  ready: ["paid"],
+  delivered: ["paid", "ready"],
+  cancelled: ["pending", "paid", "ready"],
+};
+
 export async function PATCH(req: NextRequest) {
   const body = await req.json();
   const { id, status, txHash } = body;
-  if (!id || !status) {
+
+  if (!id || typeof status !== "string") {
     return NextResponse.json({ error: "id and status required" }, { status: 400 });
+  }
+  if (!(ALLOWED_STATUSES as readonly string[]).includes(status)) {
+    return NextResponse.json({ error: `invalid_status: ${status}` }, { status: 400 });
   }
 
   const order = await prisma.order.findUnique({
@@ -94,7 +113,16 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ error: "order not found" }, { status: 404 });
   }
 
+  if (!(FROM[status as OrderStatus] ?? []).includes(order.status)) {
+    return NextResponse.json(
+      { error: `cannot transition ${order.status} -> ${status}` },
+      { status: 409 }
+    );
+  }
+
   if (status === "paid") {
+    // The customer's proof of payment: the tx hash, verified on-chain.
+    // No admin token needed — this is the one transition any payer can do.
     if (!txHash) {
       return NextResponse.json({ error: "txHash required for paid" }, { status: 400 });
     }
@@ -102,18 +130,19 @@ export async function PATCH(req: NextRequest) {
     if (!check.ok) {
       return NextResponse.json({ error: check.error }, { status: 400 });
     }
-  }
-
-  const isOwner = ownerTokenMatches(getOwnerTokenFromRequest(req), order.stall.ownerTokenHash);
-
-  if (status === "ready" || status === "delivered" || status === "cancelled") {
+  } else {
+    // Every other transition is the casera's: require the admin token.
+    const isOwner = ownerTokenMatches(
+      getOwnerTokenFromRequest(req),
+      order.stall.ownerTokenHash
+    );
     if (!isOwner) {
       return NextResponse.json({ error: "invalid_admin_token" }, { status: 401 });
     }
   }
 
   const update: Record<string, unknown> = { status };
-  if (txHash) update.txHash = txHash;
+  if (status === "paid" && txHash) update.txHash = txHash;
   if (status === "paid") update.detectedAt = new Date();
   if (status === "delivered") update.deliveredAt = new Date();
 

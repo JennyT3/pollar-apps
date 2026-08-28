@@ -33,9 +33,24 @@ pnpm dev
 
 ## Flow
 
-**Casera** (`/`) — Login, create stall, add menu items with prices and quantities. Print the QR code for your stall. When customers order, you see them appear in real-time (polling every 5s). Mark orders as "ready" when prepared. Verify pickup by entering the customer's 6-character code.
+The app is split into one screen per job:
 
-**Customer** (`/stall/{id}`) — Scan the QR code (or visit the URL). Browse the menu without logging in. Login with Pollar to pay. Select items, confirm, and pay via the Pollar SDK. Receive a pickup code after successful payment.
+**Casera** (logged in):
+- `/` — Landing. Log in, then create the stall. Right after creation the admin key is shown **once**, with a save-it warning; it is never shown again.
+- `/casera/menu` — Her list of the day: add items with price and quantity, adjust quantities during the day, "se acabó" in one tap.
+- `/casera/board` — The board: pending orders, paid/ready orders (each hash links to stellar.expert), delivered, today's summary (orders + USDC collected) and history.
+- `/casera/pickup` — Pickup verification: entering a code marks it delivered; a code that was already delivered is rejected (409).
+- `/casera/settings` — Stall QR to print, the public URL, the owner address, and (only if the key was never saved on this device) a field to paste the admin key. The key itself is never displayed here.
+
+**Customer** (`/stall/{id}`, no login required to browse) — Scan the QR code (or visit the URL). Browse the live menu which stops selling what ran out. Log in with Pollar, pick items, see the total, pay once with the Pollar SDK in USDC to the casera's account (address prefilled from the stall, never typed). Receive a pickup code + QR after the payment is verified.
+
+### Currency: USDC only
+
+Everything is USDC-denominated (testnet). The app never falls back to XLM or to another asset:
+
+- The payment asset is resolved by asset code `USDC` from the wallet's balances; if the user's account has no USDC the app says so and disables paying.
+- The on-chain verification rejects any payment that is not USDC with the testnet issuer.
+- The board's day summary and history render in USDC; while the balance is loading it shows "…", never a wrong asset.
 
 ### Order states
 
@@ -84,7 +99,7 @@ Payment is detected two ways:
 
 The Pollar gateway's token endpoints cannot be validated server-side (the documented server API is offline and `/v2/auth/session/resume` requires a DPoP proof only the SDK client can sign). So, mirroring the reference `qr-menu-orders` app, the casera's identity is an offline admin token stored by the app itself:
 
-1. On stall creation, the server generates an admin token (`ct_<40 chars>`) and returns it **once** to the casera (also shown & kept in the board UI / localStorage)
+1. On stall creation, the server generates an admin token (`ct_<40 chars>`) and returns it **once**, on the creation screen, with a "save it — it can't be recovered" warning. The UI stores it in localStorage and never displays it again.
 2. Only its SHA-256 hash is stored on the `Stall` row — the raw token is never persisted server-side
 3. Mutating endpoints (menu items, order status transitions, pickup, order list) require header `X-Admin-Token: <token>` and compare it with a timing-safe hash comparison
 4. `POST /api/stall` with an owner address that already has a token returns `409 stall_exists` — the token is only issued once, at creation. Losing it means losing write access (the trade for not being able to verify a Pollar session server-side)
@@ -102,6 +117,16 @@ Orders are created PENDING with a server-generated reference that doubles as the
 2. **Casera-side polling (fallback).** The board also polls the SDK transaction history every 10s and reports matching memos with the same endpoint, so a payment is detected even if the customer's confirmation is lost.
 
 Limits: there are no client-side webhooks, so detection depends on either the customer's browser or the board's polling; both validate on-chain, and the unique hash guarantees an order cannot be double-paid. Horizon can lag a payment by a few seconds, so the verify step retries for a few seconds before failing.
+
+## Spike (verified end to end)
+
+Validated on testnet with two distinct Pollar accounts (casera and customer, different addresses — not a self-payment). Flow: the customer ordered items, paid in USDC with the order memo, the payment landed in the casera's account, the paid order appeared on the board with its pickup code, the first code check delivered it and a repeat was rejected with 409.
+
+- Customer address: `G…` (different from the casera's)
+- Order memo: `…`
+- Amount: `X.0000000` USDC (testnet issuer)
+- Transaction hash: `…` — https://stellar.expert/explorer/testnet/tx/…
+- Video: <link when published>
 
 ## Database
 

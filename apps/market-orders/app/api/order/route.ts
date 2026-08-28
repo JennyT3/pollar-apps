@@ -21,6 +21,11 @@ export async function POST(req: NextRequest) {
   if (!stallId || !items?.length) {
     return NextResponse.json({ error: "missing fields" }, { status: 400 });
   }
+  // The customer id comes from the client, so validate it server-side: it
+  // must be a Stellar G-address (the payer's Pollar wallet id).
+  if (typeof customerAddress !== "string" || !/^G[A-Z2-7]{55}$/.test(customerAddress.trim())) {
+    return NextResponse.json({ error: "invalid_customer_address" }, { status: 400 });
+  }
 
   try {
     const order = await prisma.$transaction(async (tx) => {
@@ -55,7 +60,7 @@ export async function POST(req: NextRequest) {
       return tx.order.create({
         data: {
           stallId,
-          customerAddress: customerAddress ?? "",
+          customerAddress: customerAddress.trim(),
           total,
           status: "pending",
           txHash: null,
@@ -86,14 +91,19 @@ export async function GET(req: NextRequest) {
   if (!stallId) {
     return NextResponse.json({ error: "stallId required" }, { status: 400 });
   }
-  const stall = await prisma.stall.findUnique({ where: { id: stallId } });
-  if (!ownerTokenMatches(getOwnerTokenFromRequest(req), stall?.ownerTokenHash)) {
-    return NextResponse.json({ error: "invalid_admin_token" }, { status: 401 });
+  try {
+    const stall = await prisma.stall.findUnique({ where: { id: stallId } });
+    if (!ownerTokenMatches(getOwnerTokenFromRequest(req), stall?.ownerTokenHash)) {
+      return NextResponse.json({ error: "invalid_admin_token" }, { status: 401 });
+    }
+    const orders = await prisma.order.findMany({
+      where: { stallId },
+      include: { items: true },
+      orderBy: { createdAt: "desc" },
+    });
+    return NextResponse.json(orders);
+  } catch (e) {
+    console.error("GET /api/order failed", e);
+    return NextResponse.json({ error: "database_unavailable" }, { status: 500 });
   }
-  const orders = await prisma.order.findMany({
-    where: { stallId },
-    include: { items: true },
-    orderBy: { createdAt: "desc" },
-  });
-  return NextResponse.json(orders);
 }
