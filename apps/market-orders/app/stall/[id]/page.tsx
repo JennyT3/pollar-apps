@@ -47,6 +47,7 @@ export default function StallPage({ params }: { params: Promise<{ id: string }> 
   const [step, setStep] = useState<"menu" | "confirm" | "paying" | "done" | "error">("menu");
   const [txHash, setTxHash] = useState<string | null>(null);
   const [pickupCode, setPickupCode] = useState<string | null>(null);
+  const [paidTotal, setPaidTotal] = useState<number | null>(null);
   const [errMsg, setErrMsg] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -161,6 +162,7 @@ export default function StallPage({ params }: { params: Promise<{ id: string }> 
 
       setTxHash(res.hash);
       setPickupCode(order.pickupCode);
+      setPaidTotal(order.total);
       setStep("done");
       setCart([]);
     } catch (err) {
@@ -362,7 +364,7 @@ export default function StallPage({ params }: { params: Promise<{ id: string }> 
           <div className="text-center">
             <p className="text-lg font-bold">Orden pagada</p>
             <p className="font-mono text-sm text-muted">
-              {total} {currency}
+              {paidTotal ?? total} {currency}
             </p>
           </div>
           {pickupCode && (
@@ -391,6 +393,7 @@ export default function StallPage({ params }: { params: Promise<{ id: string }> 
               setStep("menu");
               setTxHash(null);
               setPickupCode(null);
+              setPaidTotal(null);
             }}
           >
             Nueva orden
