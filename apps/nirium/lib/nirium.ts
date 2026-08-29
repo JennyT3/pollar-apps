@@ -9,8 +9,16 @@ import { decodePaymentResponseHeader } from "@x402/core/http";
  * (the same SDK method createPollarSigner wraps here) is Pollar's own
  * first-class primitive for exactly this shape of request, so this is not a
  * hand-rolled submission path around the SDK.
+ *
+ * /premium/market over /premium/signals deliberately: /signals only has data
+ * when Nirium's autonomous loop is running, which it isn't on the mainnet
+ * box — that endpoint 501s there before charging anything, by design. This
+ * one is a live external-data read (Etherfuse/Blend/Stellar fee market),
+ * independent of the loop, so the exact same call works unmodified against
+ * the mainnet agent later. Its response is also the one already reworked to
+ * carry attributed reference rates instead of profit/yield-ranking framing.
  */
-const TESTNET_ENDPOINT = "https://nirium-agent.fly.dev/api/v1/premium/signals";
+const TESTNET_ENDPOINT = "https://nirium-agent.fly.dev/api/v1/premium/market";
 
 /** One adapter per PollarClient, same one-instance-per-key discipline as lib/pollar.tsx. */
 const globalNirium = globalThis as {
@@ -25,7 +33,7 @@ function getNiriumAdapter(pollar: PollarClient) {
   return globalNirium.__niriumAdapter;
 }
 
-export interface NiriumSignalsResult {
+export interface NiriumMarketResult {
   /** Raw JSON body Nirium's endpoint returned once payment settled. */
   data: unknown;
   /** Settlement tx hash, read off the payment receipt header set by the facilitator. */
@@ -33,13 +41,13 @@ export interface NiriumSignalsResult {
 }
 
 /**
- * Pays $0.02 USDC (testnet, sponsored network fee) for one live signal from
- * Nirium's public x402 endpoint, and returns the response plus the
+ * Pays $0.05 USDC (testnet, sponsored network fee) for one read of Nirium's
+ * public x402 market-state endpoint, and returns the response plus the
  * settlement hash if the facilitator exposed one.
  */
-export async function fetchNiriumSignal(
+export async function fetchNiriumMarket(
   pollar: PollarClient
-): Promise<NiriumSignalsResult> {
+): Promise<NiriumMarketResult> {
   const nirium = getNiriumAdapter(pollar);
   const res = await nirium.x402Fetch(TESTNET_ENDPOINT);
   if (!res.ok) {

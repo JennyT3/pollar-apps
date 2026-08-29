@@ -2,20 +2,21 @@
 
 import { useCallback, useState } from "react";
 import { usePollar } from "@pollar/react";
-import { fetchNiriumSignal, type NiriumSignalsResult } from "@/lib/nirium";
+import { fetchNiriumMarket, type NiriumMarketResult } from "@/lib/nirium";
 import { useBalance } from "@/hooks/useBalance";
 
 export type NiriumPaymentState =
   | { status: "idle" }
   | { status: "paying" }
-  | ({ status: "success" } & NiriumSignalsResult)
+  | ({ status: "success" } & NiriumMarketResult)
   | { status: "error"; message: string };
 
 /**
- * Pays for and fetches one live signal from Nirium's x402 endpoint through
- * the logged-in Pollar wallet. Not wired through PayButton/SendModal: x402 is
- * a Soroban auth-entry signature (PollarClient.signAuthEntry), a different
- * SDK primitive from the classic runTx('payment', …) those components use.
+ * Pays for and fetches one market-state read from Nirium's x402 endpoint
+ * through the logged-in Pollar wallet. Not wired through PayButton/SendModal:
+ * x402 is a Soroban auth-entry signature (PollarClient.signAuthEntry), a
+ * different SDK primitive from the classic runTx('payment', …) those
+ * components use.
  */
 export function useNiriumPayment(): {
   state: NiriumPaymentState;
@@ -28,7 +29,7 @@ export function useNiriumPayment(): {
   const pay = useCallback(async () => {
     setState({ status: "paying" });
     try {
-      const result = await fetchNiriumSignal(getClient());
+      const result = await fetchNiriumMarket(getClient());
       setState({ status: "success", ...result });
       // The x402 payment never touches the SDK's own `tx` state machine
       // (BalanceCard's auto-refresh watches that), so refresh explicitly.

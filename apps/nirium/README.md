@@ -1,10 +1,10 @@
 # Nirium x402 adapter
 
-Log in with Pollar, pay $0.02 USDC, get one real API call from [Nirium](https://nirium.xyz) — no XLM, no seed phrase, no manual wallet funding.
+Log in with Pollar, pay $0.05 USDC, get one real API call from [Nirium](https://nirium.xyz) — no XLM, no seed phrase, no manual wallet funding.
 
 ## What this demonstrates
 
-Nirium's public API charges per request over [x402](https://developers.stellar.org/docs/build/agentic-payments/x402) (HTTP 402): each call to `GET /api/v1/premium/signals` costs $0.02 USDC, settled on Stellar testnet before the response is returned. A Pollar wallet can pay it directly — no separate Nirium account, no extra funding step:
+Nirium's public API charges per request over [x402](https://developers.stellar.org/docs/build/agentic-payments/x402) (HTTP 402): each call to `GET /api/v1/premium/market` costs $0.05 USDC, settled on Stellar testnet before the response is returned. A Pollar wallet can pay it directly — no separate Nirium account, no extra funding step:
 
 1. `usePollar().getClient()` gives the logged-in user's `PollarClient`.
 2. [`nirium-pollar-adapter`](https://www.npmjs.com/package/nirium-pollar-adapter)'s `createPollarSigner()` wraps `PollarClient.signAuthEntry()` (Pollar's own SDK method for signing a Soroban auth entry) into the SEP-43 signer x402 expects.
@@ -14,6 +14,8 @@ Pollar's sponsored trustline and the x402 facilitator's sponsored network fee me
 
 This is why the payment isn't wired through `<PayButton>` or `SendModal`: those call `runTx('payment', …)`, a classic Stellar payment to another Pollar user. x402 is a different, equally first-class Pollar primitive (`signAuthEntry`, not `runTx`) for authorizing a Soroban contract invocation — there's no P2P recipient here, the counterparty is Nirium's facilitator.
 
+`/premium/market` over `/premium/signals` on purpose: `/signals` only has data while Nirium's autonomous loop is running, which isn't the case on Nirium's mainnet box — that endpoint returns `501` there, before any charge, rather than silently returning an empty list. `/market` is a live external-data read (Etherfuse reference rates, Stellar fee market) independent of the loop, so the same call this app makes works unmodified against mainnet too, and its response is reference data attributed to its source rather than a trading signal.
+
 ## Setup
 
 1. `cp .env.example .env`
@@ -21,7 +23,7 @@ This is why the payment isn't wired through `<PayButton>` or `SendModal`: those 
 3. `pnpm install`
 4. `pnpm dev`
 
-Log in, then hit **Pay $0.02 & fetch**. The response panel shows the settlement tx hash (linked to Stellar Expert) and the JSON Nirium returned.
+Log in, then hit **Pay $0.05 & fetch**. The response panel shows the settlement tx hash (linked to Stellar Expert) and the JSON Nirium returned.
 
 ## Scope
 

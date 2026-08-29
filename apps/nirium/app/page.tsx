@@ -12,7 +12,7 @@ import { useNiriumPayment } from "@/hooks/useNiriumPayment";
 
 /**
  * Nirium pays for its own API calls per-request over x402 (HTTP 402):
- * every call to this endpoint costs $0.02 USDC, settled on Stellar testnet
+ * every call to this endpoint costs $0.05 USDC, settled on Stellar testnet
  * before the response is returned. This screen pays for and shows one call,
  * with a logged-in Pollar wallet doing the signing — no XLM needed, the
  * facilitator sponsors the network fee and Pollar sponsors the trustline.
@@ -31,7 +31,7 @@ export default function Home() {
             <span className="block text-primary">pay-per-call, live</span>
           </h1>
           <p className="max-w-sm text-lg leading-8 text-muted">
-            Log in with Pollar, then pay $0.02 USDC for one real API call to
+            Log in with Pollar, then pay $0.05 USDC for one real API call to
             Nirium — no XLM, no wallet setup, no seed phrase.
           </p>
         </div>
@@ -56,9 +56,9 @@ export default function Home() {
 
       <Card className="flex flex-col gap-4">
         <div>
-          <h2 className="font-semibold">Pay for a live signal</h2>
+          <h2 className="font-semibold">Pay for live market state</h2>
           <p className="mt-1 text-sm leading-6 text-muted">
-            One request to Nirium&apos;s public x402 endpoint. $0.02 USDC,
+            One request to Nirium&apos;s public x402 endpoint. $0.05 USDC,
             settled before the response comes back.
           </p>
           <p className="mt-1 font-mono text-xs text-muted-light">
@@ -70,7 +70,7 @@ export default function Home() {
           onClick={() => void pay()}
           loading={state.status === "paying"}
         >
-          {state.status === "paying" ? "Paying…" : "Pay $0.02 & fetch"}
+          {state.status === "paying" ? "Paying…" : "Pay $0.05 & fetch"}
         </Button>
 
         {state.status === "error" && (
@@ -86,9 +86,10 @@ export default function Home() {
                 What just happened
               </span>
               <p className="mt-1 text-sm leading-6">
-                Pollar signed a Soroban auth entry authorizing $0.02 USDC.
+                Pollar signed a Soroban auth entry authorizing $0.05 USDC.
                 Nirium&apos;s facilitator verified and settled it, then
-                returned the signal below.
+                returned the market state below — reference rates
+                attributed to their source, not investment advice.
               </p>
             </div>
 
