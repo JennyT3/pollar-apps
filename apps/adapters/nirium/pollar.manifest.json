@@ -1,6 +1,6 @@
 {
   "name": "Nirium x402 adapter",
-  "slug": "nirium",
+  "slug": "adapters/nirium",
   "description": "Pay $0.05 USDC for a real API call to Nirium over x402, signed by your Pollar wallet — no XLM needed.",
   "category": "commerce",
   "icon": "/icon.svg",
