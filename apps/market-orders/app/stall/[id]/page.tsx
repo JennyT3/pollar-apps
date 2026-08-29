@@ -36,7 +36,7 @@ export default function StallPage({ params }: { params: Promise<{ id: string }> 
   const { id } = use(params);
   const { user } = usePollarAuth();
   const { runTx } = usePollar();
-  const { assets } = useBalance();
+  const { assets, refresh } = useBalance();
   const { payAsset, ready } = useUsdcAsset();
   // Show the USDC balance only, never the primary record (which would fall
   // back to native XLM and be mislabeled). `assets` is the SDK's full list.
@@ -44,6 +44,7 @@ export default function StallPage({ params }: { params: Promise<{ id: string }> 
   // This app is USDC-only; the amount shown is always in USDC even while the
   // wallet's asset list is still loading.
   const currency = "USDC";
+  const hasUsdc = payAsset !== null;
 
   const [stall, setStall] = useState<Stall | null>(null);
   const [cart, setCart] = useState<CartItem[]>([]);
@@ -276,11 +277,6 @@ export default function StallPage({ params }: { params: Promise<{ id: string }> 
               <div className="mt-2 border-t border-border pt-2 font-bold">
                 Total: {total} {currency}
               </div>
-              {user && usdcBalance !== null && (
-                <p className="mt-1 text-sm text-muted">
-                  Tu saldo: {formatAmount(usdcBalance)} {currency}
-                </p>
-              )}
             </Card>
           )}
 
@@ -290,15 +286,16 @@ export default function StallPage({ params }: { params: Promise<{ id: string }> 
             </p>
           ) : (
             <>
-              {ready && !payAsset && (
-                <div className="rounded-2xl border border-warning-border bg-warning-light px-4 py-3 text-sm text-warning">
-                  Tu cuenta todavía no tiene USDC. Este puesto solo acepta
-                  pagos en USDC — recibí USDC en tu cuenta y volvé a intentar.
-                </div>
-              )}
+              <UsdcStatus
+                ready={ready}
+                hasUsdc={hasUsdc}
+                balance={usdcBalance}
+                onRetry={refresh}
+                compact
+              />
               <Button
                 onClick={() => setStep("confirm")}
-                disabled={cart.length === 0}
+                disabled={cart.length === 0 || !hasUsdc || !ready}
                 className="w-full"
               >
                 Pagar
@@ -325,11 +322,13 @@ export default function StallPage({ params }: { params: Promise<{ id: string }> 
             <div className="mt-2 border-t border-border pt-2 font-bold">
               Total: {total} {currency}
             </div>
-            {user && usdcBalance !== null && (
-              <p className="mt-1 text-sm text-muted">
-                Tu saldo: {formatAmount(usdcBalance)} {currency}
-              </p>
-            )}
+            <UsdcStatus
+              ready={ready}
+              hasUsdc={hasUsdc}
+              balance={usdcBalance}
+              onRetry={refresh}
+              compact
+            />
           </Card>
           <div className="flex gap-2">
             <Button
@@ -421,5 +420,52 @@ export default function StallPage({ params }: { params: Promise<{ id: string }> 
         {stall.name} · Pagar con Pollar en USDC
       </p>
     </main>
+  );
+}
+
+/**
+ * Always-there USDC state for a logged-in customer on this stall: still
+ * loading, balance available, or "this stall only takes USDC (testnet) and
+ * your account has none yet" with a retry. USDC-only by design — never a
+ * XLM fallback.
+ */
+function UsdcStatus({
+  ready,
+  hasUsdc,
+  balance,
+  onRetry,
+  compact,
+}: {
+  ready: boolean;
+  hasUsdc: boolean;
+  balance: string | null;
+  onRetry: () => Promise<void>;
+  compact?: boolean;
+}) {
+  if (!ready) {
+    return <p className="text-sm text-muted">Cargando tu saldo USDC…</p>;
+  }
+  if (hasUsdc) {
+    return (
+      <p className={`text-sm text-muted ${compact ? "mt-1" : ""}`}>
+        Pagás en USDC · Tu saldo:{" "}
+        {balance !== null ? `${formatAmount(balance)} USDC` : "—"}
+      </p>
+    );
+  }
+  return (
+    <div className="flex items-center justify-between gap-3 rounded-xl border border-warning-border bg-warning-light px-3 py-2.5 text-sm text-warning">
+      <span>
+        Este puesto solo acepta USDC (testnet) y tu cuenta todavía no tiene
+        USDC. Recibí USDC en esta cuenta y reintentá.
+      </span>
+      <Button
+        variant="ghost"
+        onClick={() => void onRetry()}
+        className="shrink-0 px-2 py-1 text-xs"
+      >
+        Reintentar
+      </Button>
+    </div>
   );
 }

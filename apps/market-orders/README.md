@@ -122,10 +122,10 @@ Limits: there are no client-side webhooks, so detection depends on either the cu
 
 Validated on testnet with two distinct Pollar accounts (casera and customer, different addresses — not a self-payment). Flow: the customer ordered items, paid in USDC with the order memo, the payment landed in the casera's account, the paid order appeared on the board with its pickup code, the first code check delivered it and a repeat was rejected with 409.
 
-- Customer address: `G…` (different from the casera's)
-- Order memo: `…`
-- Amount: `X.0000000` USDC (testnet issuer)
-- Transaction hash: `…` — https://stellar.expert/explorer/testnet/tx/…
+- Customer address: `GAWVYH6HYAHOHR57QI7CFY6IWR3WFTKESDGVEOONMBEQDEOF6VR47SBQ` (different from the casera's)
+- Order memo: `Ocmtcmtdz4xd7ti`
+- Amount: `10.0000000` USDC (testnet issuer)
+- Transaction hash: `f4fdcd9eedaade9c89d6a3a933b935984f21ec7ee96fed59fdfa6328574ab45c` — https://stellar.expert/explorer/testnet/tx/f4fdcd9eedaade9c89d6a3a933b935984f21ec7ee96fed59fdfa6328574ab45c
 - Video: <link when published>
 
 ## Database
