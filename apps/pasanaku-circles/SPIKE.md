@@ -35,3 +35,13 @@ Abrí `/spike` en dos navegadores (o un teléfono + una laptop). Entrá con cuen
 - Hash: `ac1002b384d5b4794c5ef74aba81e00428e352e41c0c8f9c0b603aa7727c6d7e`
 - Explorer: https://stellar.expert/explorer/testnet/tx/ac1002b384d5b4794c5ef74aba81e00428e352e41c0c8f9c0b603aa7727c6d7e
 - Checks verificados contra Horizon: `successful: true`, una sola operación `payment`, `from` = cuenta pagadora, `to` = cuenta que le tocaba cobrar, `amount: 10.0000000`, asset `USDC` con el issuer correcto (`GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5`, no XLM), memo tipo `id` presente.
+
+### Ronda de 3 miembros (evidencia adicional)
+
+Círculo completo con tres cuentas Pollar reales (A, B, C), verificado contra Horizon: exitoso, una sola operación `payment`, memo tipo `id`, USDC con el issuer correcto.
+
+| Hash | De | A | Monto |
+|---|---|---|---|
+| [`559b8c06…`](https://stellar.expert/explorer/testnet/tx/559b8c060946d635dade39adaee86509e546b2c9c1c802da5d504aeba2bd05a2) | A | C | 7 USDC |
+| [`25b34607…`](https://stellar.expert/explorer/testnet/tx/25b3460797ed5f61cbf1eba66b622b3367a64d92a0ca2f04e3ad59572711cfe5) | B | C | 7 USDC |
+| [`938a3b33…`](https://stellar.expert/explorer/testnet/tx/938a3b33253b34846aae045af2f92372f16297203c8acb2dfcf9b53b0414268e) | C | A | 7 USDC |
