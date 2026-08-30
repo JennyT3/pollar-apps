@@ -1,7 +1,7 @@
 {
   "name": "La Polla",
   "slug": "match-predictions",
-  "description": "La polla del grupo: cada uno entra pagando por QR, la tabla se mueve con cada resultado y el pozo se paga con comprobante, en USDC sobre Pollar.",
+  "description": "The football pool your group already runs on WhatsApp, with the money part working: join by QR, predictions freeze at the deadline, and the pot pays out to the winner in USDC on Pollar.",
   "category": "community",
   "icon": "/icon.svg",
   "url": "https://la-polla-seven.vercel.app"
