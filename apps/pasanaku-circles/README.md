@@ -35,11 +35,9 @@ Nadie tipea una dirección `G…` en el flujo principal.
 
 ## Evidencia del flujo
 
-Capturas reales (móvil + desktop) y diagramas:
+Capturas reales (móvil + desktop) del flujo completo están adjuntas en la descripción del PR.
 
-- Walkthrough: [docs/screenshots/FLOW.md](docs/screenshots/FLOW.md)
-- Móvil: `docs/screenshots/mobile/`
-- Desktop: `docs/screenshots/desktop/`
+Para regenerarlas localmente:
 
 ```bash
 pnpm screenshots

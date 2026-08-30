@@ -25,4 +25,4 @@ El issue pide un círculo de al menos 3 cuentas, una ronda completa pagada por Q
 - Tipear una dirección `G…` como flujo principal
 - Un pago en XLM
 
-Los diagramas en `docs/diagrams/output/` y las capturas en `docs/screenshots/FLOW.md` sirven de storyboard.
+Los diagramas en `docs/diagrams/output/` y las capturas adjuntas en la descripción del PR sirven de storyboard.
