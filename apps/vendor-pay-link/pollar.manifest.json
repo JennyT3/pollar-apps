@@ -1,0 +1,8 @@
+{
+  "name": "Puesto",
+  "slug": "vendor-pay-link",
+  "description": "QR charging for informal vendors in Bolivia: permanent open-amount stall QR and per-sale fixed QR, settled in USDC on Pollar (Stellar testnet).",
+  "category": "commerce",
+  "icon": "/icon.svg",
+  "url": "https://pollar-qr-link.vercel.app"
+}
