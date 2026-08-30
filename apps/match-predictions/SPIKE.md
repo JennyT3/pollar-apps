@@ -72,9 +72,40 @@ Testnet transactions captured while running the loop above. Every hash opens on
 
 | Kind | Amount | Hash |
 | --- | --- | --- |
-| Entry | | |
-| Payout | | |
+| Entry | 5.0000000 USDC | [`7da3d3dd1c7ed718262b9539d664f158fdeb6104256d1a38a06a1552d87aacc8`](https://stellar.expert/explorer/testnet/tx/7da3d3dd1c7ed718262b9539d664f158fdeb6104256d1a38a06a1552d87aacc8) |
+| Payout | 5.0000000 USDC | [`4c8429c07f3a6bd0c98049b0c634390ba1a26b3051258804bba466062591d059`](https://stellar.expert/explorer/testnet/tx/4c8429c07f3a6bd0c98049b0c634390ba1a26b3051258804bba466062591d059) |
 
-> To be filled with the hashes from the run, and with the demo video, before the
-> PR is opened. Nothing goes in this table that was not produced by an actual
-> payment on testnet.
+Both ran through the app itself rather than the spike page: polla `8MYA4T`, entry
+5 USDC, scoring 3/1. The player joined from the invite link, paid, and loaded
+predictions before the deadline; after it passed the organizer entered results,
+closed the polla, and confirmed the prefilled payout. Ledgers 4406152 and
+4406434.
+
+Every check listed above passes on both: `successful: true`, the payment lands in
+the expected account, the amount matches in stroops, the asset is USDC issued by
+`GBBD47IF…FLA5`, the memo is the entry's own reference, and the payer is the
+account expected to pay.
+
+## What the run turned up
+
+**A player needs their own XLM.** The first attempt at the entry failed with
+"Not enough XLM to cover the network fee" on a wallet holding 20 USDC and 0 XLM.
+The account's reserves were sponsored (`num_sponsored: 4`), which is what the
+template's "fee covered by the app" copy refers to, but a reserve and a
+transaction fee are different things. Both transactions above confirm it: in each
+one `fee_account` equals `source_account`, so neither was fee-bumped and each
+payer spent 100 stroops of their own.
+
+The fix is in the dashboard, not in the code: give new wallets a starting XLM
+balance under **Treasury → Account Funding**, and enable `payment` under
+**Treasury → Sponsorship**. An existing wallet is topped up from **Users →
+Wallets → Fund 2 XLM**. The same failure is recorded in the qr-menu-orders
+template (`apps/qr-menu-orders/docs/spike.md`), so it is a property of the
+platform's defaults rather than of this app. It is repeated in the README because
+it hits a player on their very first entry, which is the worst moment for the app
+to look broken.
+
+**The pot round-trips exactly.** The player held 20 USDC before the run. The
+entry moved 5 to the organizer and the payout returned 5, leaving both accounts
+at 20 USDC, with the difference visible only in XLM fees. Nothing is retained
+anywhere, which is the claim the app makes on its own home screen.

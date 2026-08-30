@@ -36,6 +36,17 @@ explicitly for local work, and the deploy URL for production. Wildcards are not
 supported, so list each environment separately. Changes apply immediately, with
 no redeploy.
 
+A second dashboard step, or your players' first entry fails on a wallet that
+looks perfectly funded. Under **Treasury → Account Funding**, give new wallets a
+non-zero starting XLM balance, and under **Treasury → Sponsorship**, enable
+`payment`. Pollar sponsors the XLM *reserve* that activates a wallet, which is
+not the *fee* of each transaction: a player holding 20 USDC and 0 XLM cannot pay
+their entry, and the SDK says so with "Not enough XLM to cover the network fee".
+At 100 stroops per payment, 1 XLM covers roughly 100,000 entries. An existing
+wallet is topped up from **Users → Wallets → Fund 2 XLM**. This is not
+hypothetical: it is what the first run of the spike hit, and it is written up in
+[SPIKE.md](./SPIKE.md).
+
 ### Environment
 
 | Variable | Required | What it does |
@@ -225,7 +236,16 @@ confirm.
 ```bash
 pnpm lint          # clean
 pnpm build         # typechecks and builds
+pnpm test          # the rules that decide who takes the pot
 ```
+
+`pnpm test` covers `lib/scoring.ts` and `lib/money.ts`, the two pure modules the
+money depends on: scoring under the declared rules, competition ranking, and the
+case a demo almost never produces but the payout has to survive, several players
+tied at the top. The pot is divided in integer stroops, so the tests also pin
+down that 10 USDC between three winners is 3.3333334 / 3.3333333 / 3.3333333 and
+that the shares always add back up to exactly the pot, with the odd stroop going
+to a fixed, public order rather than being quietly dropped.
 
 The API was also driven end to end against a running dev server, signing every
 write with a real SEP-53 signature from generated keypairs: sign-in and its
