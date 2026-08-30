@@ -67,24 +67,60 @@ the prefilled payout.
 
 ## Runs
 
-Testnet transactions captured while running the loop above. Every hash opens on
+Testnet transactions captured while running the loop above, both of them through
+the app itself rather than through `/spike`. Every hash opens on
 [stellar.expert testnet](https://stellar.expert/explorer/testnet).
 
-| Kind | Amount | Hash |
-| --- | --- | --- |
-| Entry | 5.0000000 USDC | [`7da3d3dd1c7ed718262b9539d664f158fdeb6104256d1a38a06a1552d87aacc8`](https://stellar.expert/explorer/testnet/tx/7da3d3dd1c7ed718262b9539d664f158fdeb6104256d1a38a06a1552d87aacc8) |
-| Payout | 5.0000000 USDC | [`4c8429c07f3a6bd0c98049b0c634390ba1a26b3051258804bba466062591d059`](https://stellar.expert/explorer/testnet/tx/4c8429c07f3a6bd0c98049b0c634390ba1a26b3051258804bba466062591d059) |
+### One entry, one payout (polla `8MYA4T`)
 
-Both ran through the app itself rather than the spike page: polla `8MYA4T`, entry
-5 USDC, scoring 3/1. The player joined from the invite link, paid, and loaded
-predictions before the deadline; after it passed the organizer entered results,
-closed the polla, and confirmed the prefilled payout. Ledgers 4406152 and
-4406434.
+The blocking criterion on its own: two Pollar accounts, entry 5 USDC, scoring
+3/1. The player joined from the invite link, paid, and loaded predictions before
+the deadline; after it passed the organizer entered results, closed the polla,
+and confirmed the prefilled payout.
 
-Every check listed above passes on both: `successful: true`, the payment lands in
-the expected account, the amount matches in stroops, the asset is USDC issued by
-`GBBD47IF…FLA5`, the memo is the entry's own reference, and the payer is the
-account expected to pay.
+| Kind | Amount | Ledger | Hash |
+| --- | --- | --- | --- |
+| Entry | 5.0000000 USDC | 4406152 | [`7da3d3dd…acc8`](https://stellar.expert/explorer/testnet/tx/7da3d3dd1c7ed718262b9539d664f158fdeb6104256d1a38a06a1552d87aacc8) |
+| Payout | 5.0000000 USDC | 4406434 | [`4c8429c0…d059`](https://stellar.expert/explorer/testnet/tx/4c8429c07f3a6bd0c98049b0c634390ba1a26b3051258804bba466062591d059) |
+
+The pot round-trips exactly. The player held 20 USDC before the run; the entry
+moved 5 to the organizer and the payout returned 5, leaving both accounts at
+20 USDC with the difference visible only in XLM fees. Nothing is retained
+anywhere, which is the claim the app makes on its own home screen.
+
+### Three players and a split pot (polla `62USM5`)
+
+The demo run, recorded: <https://youtu.be/K6e8M6z6mps>. Entry 5 USDC, scoring
+3/1, three players joining a 15 USDC pot, one of them by scanning the QR from a
+phone.
+
+| Player | Bolívar 2-1 The Strongest | Always Ready 0-0 Wilstermann | Points |
+| --- | --- | --- | --- |
+| Nico | 2-1, exact | 1-0, miss | **3** |
+| Rodri | 0-2, miss | 0-0, exact | **3** |
+| Mica | 3-1, outcome | 2-0, miss | 1 |
+
+Nico and Rodri finished level at the top, so the pot was divided rather than
+handed over: `winnersOf` returned both, `splitPot` cut 15 USDC into two shares of
+7.5000000, and the organizer confirmed two separate payments.
+
+| Kind | Player | Amount | Ledger | Hash |
+| --- | --- | --- | --- | --- |
+| Entry | Nico | 5.0000000 USDC | 4407081 | [`1cff826a…cf8d`](https://stellar.expert/explorer/testnet/tx/1cff826a596d13ac7ad8a3282752a12296c9290b7df188344daaa90f4973cf8d) |
+| Entry | Rodri | 5.0000000 USDC | 4407105 | [`09990e7d…228b`](https://stellar.expert/explorer/testnet/tx/09990e7d50565ddc09d2a3c1ee6a2f05ace681854395d685c7c1a4f21cc7228b) |
+| Entry | Mica | 5.0000000 USDC | 4407105 | [`09338b49…b80b`](https://stellar.expert/explorer/testnet/tx/09338b49d488520e73b414c3c226b95666fd410448e6575a1969542f29d9b80b) |
+| Payout | Nico | 7.5000000 USDC | 4407418 | [`ce1c2f61…00f7`](https://stellar.expert/explorer/testnet/tx/ce1c2f61c4b732bea5768d68d58c2f5edd08f756b39a304133a0402860ab00f7) |
+| Payout | Rodri | 7.5000000 USDC | 4407419 | [`84623b26…9cc3`](https://stellar.expert/explorer/testnet/tx/84623b262034b38efdbc2f293ef10d0416412fbbe9b51c872e0142fa4d909cc3) |
+
+This is the case a run rarely produces and the payout has to survive, so it is
+worth stating that it happened on the ledger and not only in `lib/money.test.ts`:
+three entries in, two payouts out, and the shares adding back up to exactly the
+pot.
+
+Every check listed above passes on all seven: `successful: true`, the payment
+lands in the expected account, the amount matches in stroops, the asset is USDC
+issued by `GBBD47IF…FLA5`, the memo is the entry's or payout's own reference, and
+the payer is the account expected to pay.
 
 ## What the run turned up
 

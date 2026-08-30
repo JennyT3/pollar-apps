@@ -13,6 +13,9 @@ Pollar, and each one is recorded with the hash that proves it.
 
 > Built on the pollar-apps template for issue
 > [#14](https://github.com/pollar-xyz/pollar-apps/issues/14).
+> Live at <https://la-polla-seven.vercel.app>, demo run at
+> <https://youtu.be/K6e8M6z6mps>, and the testnet hashes behind both in
+> [SPIKE.md](./SPIKE.md).
 
 ## Run it from a fresh clone
 
