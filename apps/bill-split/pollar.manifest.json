@@ -1,0 +1,8 @@
+{
+  "name": "Bill Split",
+  "slug": "bill-split",
+  "description": "Split a bill between friends and settle each share by QR on Pollar",
+  "category": "savings",
+  "icon": "/icon.svg",
+  "url": "https://bill-split-delta-taupe.vercel.app"
+}

@@ -10,9 +10,9 @@
     {
       "slug": "bill-split",
       "category": "savings",
-      "issue": null,
-      "deploy": null,
-      "author": null
+      "issue": "https://github.com/pollar-xyz/pollar-apps/issues/6",
+      "deploy": "https://bill-split-delta-taupe.vercel.app",
+      "author": "herny25"
     },
     {
       "slug": "money-pool",
