@@ -4,5 +4,5 @@
   "description": "Send BOB from Bolivia and land GHS in a Ghanaian mobile money account, bridged through Stellar USDC via Morapay and Pollar's ramp SDK.",
   "category": "commerce",
   "icon": "/icon.svg",
-  "url": ""
+  "url": "https://ghana-bolivia.vercel.app"
 }

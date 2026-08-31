@@ -88,7 +88,7 @@
       "slug": "bolivia-ghana-corridor",
       "category": "commerce",
       "issue": "https://github.com/pollar-xyz/pollar-apps/issues/17",
-      "deploy": null,
+      "deploy": "https://ghana-bolivia.vercel.app",
       "author": "PatrickKish1"
     },
     {
