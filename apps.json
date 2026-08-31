@@ -4,22 +4,22 @@
       "slug": "pasanaku-circles",
       "category": "savings",
       "issue": "https://github.com/pollar-xyz/pollar-apps/issues/4",
-      "deploy": null,
-      "author": null
+      "deploy": "https://pasanaku.acachete.xyz",
+      "author": "salazarsebas"
     },
     {
       "slug": "bill-split",
       "category": "savings",
-      "issue": null,
-      "deploy": null,
-      "author": null
+      "issue": "https://github.com/pollar-xyz/pollar-apps/issues/6",
+      "deploy": "https://bill-split-delta-taupe.vercel.app",
+      "author": "herny25"
     },
     {
       "slug": "money-pool",
       "category": "savings",
-      "issue": null,
-      "deploy": null,
-      "author": null
+      "issue": "https://github.com/pollar-xyz/pollar-apps/issues/7",
+      "deploy": "https://money-pool-tau.vercel.app",
+      "author": "moises-cisneros"
     },
     {
       "slug": "vendor-pay-link",
@@ -52,9 +52,9 @@
     {
       "slug": "match-predictions",
       "category": "community",
-      "issue": null,
-      "deploy": null,
-      "author": null
+      "issue": "https://github.com/pollar-xyz/pollar-apps/issues/14",
+      "deploy": "https://la-polla-seven.vercel.app",
+      "author": "diegoveme"
     },
     {
       "slug": "market-orders",
@@ -90,6 +90,13 @@
       "issue": "https://github.com/pollar-xyz/pollar-apps/issues/17",
       "deploy": null,
       "author": "PatrickKish1"
+    },
+    {
+      "slug": "adapters/nirium",
+      "category": "commerce",
+      "issue": "https://github.com/pollar-xyz/pollar-apps/issues/19",
+      "deploy": "https://nirium-pollar-x402-demo.vercel.app",
+      "author": "Eras256"
     }
   ]
 }

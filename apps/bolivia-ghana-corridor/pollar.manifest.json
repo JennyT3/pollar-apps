@@ -3,6 +3,6 @@
   "slug": "bolivia-ghana-corridor",
   "description": "Send BOB from Bolivia and land GHS in a Ghanaian mobile money account, bridged through Stellar USDC via Morapay and Pollar's ramp SDK.",
   "category": "commerce",
-  "icon": "/icon.png",
+  "icon": "/icon.svg",
   "url": ""
 }
