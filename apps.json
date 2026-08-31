@@ -83,6 +83,13 @@
       "issue": null,
       "deploy": null,
       "author": null
+    },
+    {
+      "slug": "adapters/nirium",
+      "category": "commerce",
+      "issue": "https://github.com/pollar-xyz/pollar-apps/issues/19",
+      "deploy": "https://nirium-pollar-x402-demo.vercel.app",
+      "author": "Eras256"
     }
   ]
 }
