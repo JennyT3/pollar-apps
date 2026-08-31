@@ -1,0 +1,8 @@
+{
+  "name": "Market Orders",
+  "slug": "market-orders",
+  "description": "Pre-order and pay ahead to your casera, pick up without waiting in line",
+  "category": "community",
+  "icon": "/icon.svg",
+  "url": "https://market-orders.vercel.app"
+}

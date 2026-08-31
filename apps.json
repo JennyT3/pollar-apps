@@ -59,9 +59,9 @@
     {
       "slug": "market-orders",
       "category": "community",
-      "issue": null,
-      "deploy": null,
-      "author": null
+      "issue": "https://github.com/pollar-xyz/pollar-apps/issues/15",
+      "deploy": "https://market-orders.vercel.app",
+      "author": "JennyT3"
     },
     {
       "slug": "alcancia-goals",
