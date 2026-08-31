@@ -44,6 +44,10 @@ async function verifyTx(
   }
 
   const tx = await txRes.json();
+  // Horizon returns failed transactions too (and their operations). Without
+  // this check, a payment that failed (e.g. op_underfunded) would still mark
+  // the order as paid even though no money moved.
+  if (tx.successful !== true) return { ok: false, error: "tx_failed" };
   if (tx.memo !== expectedMemo) return { ok: false, error: "memo_mismatch" };
 
   let payments: Array<{
