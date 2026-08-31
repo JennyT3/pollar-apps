@@ -4,9 +4,12 @@ import { BalanceCard } from "@/components/BalanceCard";
 import { LoginButton } from "@/components/LoginButton";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
-import { PollarLogo } from "@/components/ui/PollarLogo";
+import { BrandHeader } from "@/components/ui/BrandHeader";
+import { ThemeToggle } from "@/components/ui/ThemeToggle";
+import { LanguageToggle } from "@/components/ui/LanguageToggle";
 import { middleTruncate } from "@/lib/format";
 import { NIRIUM_TESTNET_ENDPOINT } from "@/lib/nirium";
+import { useLanguage } from "@/lib/i18n";
 import { usePollarAuth } from "@/hooks/usePollarAuth";
 import { useNiriumPayment } from "@/hooks/useNiriumPayment";
 
@@ -20,19 +23,23 @@ import { useNiriumPayment } from "@/hooks/useNiriumPayment";
 export default function Home() {
   const { user } = usePollarAuth();
   const { state, pay } = useNiriumPayment();
+  const { t } = useLanguage();
 
   if (!user) {
     return (
-      <main className="flex flex-1 flex-col items-center justify-center gap-8 px-6 py-12">
+      <main className="relative flex flex-1 flex-col items-center justify-center gap-8 px-6 py-12">
+        <div className="absolute right-4 top-4 flex items-center gap-2 sm:right-6 sm:top-6">
+          <LanguageToggle />
+          <ThemeToggle />
+        </div>
         <div className="flex flex-col items-center gap-5 text-center">
-          <PollarLogo size={104} />
+          <BrandHeader size={64} />
           <h1 className="text-4xl font-extrabold leading-tight tracking-tight sm:text-5xl">
-            Nirium x402 adapter
-            <span className="block text-primary">pay-per-call, live</span>
+            {t("hero.title")}
+            <span className="block text-primary">{t("hero.subtitle")}</span>
           </h1>
           <p className="max-w-sm text-lg leading-8 text-muted">
-            Log in with Pollar, then pay $0.05 USDC for one real API call to
-            Nirium — no XLM, no wallet setup, no seed phrase.
+            {t("hero.body")}
           </p>
         </div>
         <LoginButton />
@@ -44,22 +51,25 @@ export default function Home() {
     <main className="mx-auto flex w-full max-w-md flex-1 flex-col gap-4 px-4 py-6 lg:max-w-lg lg:py-10">
       <header className="flex items-center justify-between gap-3 py-2">
         <div className="flex min-w-0 items-center gap-2.5">
-          <PollarLogo size={30} />
+          <BrandHeader size={30} />
           <h1 className="hidden min-w-0 truncate text-xl font-bold tracking-tight sm:block">
-            Nirium x402 adapter
+            {t("header.title")}
           </h1>
         </div>
-        <LoginButton />
+        <div className="flex shrink-0 items-center gap-2">
+          <LanguageToggle />
+          <ThemeToggle />
+          <LoginButton />
+        </div>
       </header>
 
       <BalanceCard />
 
       <Card className="flex flex-col gap-4">
         <div>
-          <h2 className="font-semibold">Pay for live market state</h2>
+          <h2 className="font-semibold">{t("card.title")}</h2>
           <p className="mt-1 text-sm leading-6 text-muted">
-            One request to Nirium&apos;s public x402 endpoint. $0.05 USDC,
-            settled before the response comes back.
+            {t("card.body")}
           </p>
           <p className="mt-1 font-mono text-xs text-muted-light">
             GET {NIRIUM_TESTNET_ENDPOINT}
@@ -70,7 +80,7 @@ export default function Home() {
           onClick={() => void pay()}
           loading={state.status === "paying"}
         >
-          {state.status === "paying" ? "Paying…" : "Pay $0.05 & fetch"}
+          {state.status === "paying" ? t("card.paying") : t("card.payLabel")}
         </Button>
 
         {state.status === "error" && (
@@ -83,13 +93,10 @@ export default function Home() {
           <div className="flex flex-col gap-3 rounded-xl border border-border bg-surface p-4">
             <div>
               <span className="text-sm font-medium text-muted">
-                What just happened
+                {t("result.title")}
               </span>
               <p className="mt-1 text-sm leading-6">
-                Pollar signed a Soroban auth entry authorizing $0.05 USDC.
-                Nirium&apos;s facilitator verified and settled it, then
-                returned the market state below — reference rates
-                attributed to their source, not investment advice.
+                {t("result.body")}
               </p>
             </div>
 
@@ -112,7 +119,7 @@ export default function Home() {
       </Card>
 
       <p className="mt-auto pt-4 text-center text-xs text-muted-light">
-        Powered by{" "}
+        {t("footer.poweredBy")}{" "}
         <a
           href="https://www.npmjs.com/package/nirium-pollar-adapter"
           target="_blank"
@@ -121,7 +128,7 @@ export default function Home() {
         >
           nirium-pollar-adapter
         </a>
-        . Testnet — payments are real and verifiable, the money is not.
+        . {t("footer.disclaimer")}
       </p>
     </main>
   );

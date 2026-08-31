@@ -5,11 +5,13 @@ import { usePollar } from "@pollar/react";
 import { PollarLogo } from "@/components/ui/PollarLogo";
 import { useBalance } from "@/hooks/useBalance";
 import { formatAmount } from "@/lib/format";
+import { useLanguage } from "@/lib/i18n";
 
 /** The wallet card: the app's primary balance on a branded Pollar-blue card. */
 export function BalanceCard() {
   const { balance, currency, isLoading, error, refresh } = useBalance();
   const { isAuthenticated, tx } = usePollar();
+  const { t } = useLanguage();
 
   // `tx` is the SDK's global transaction state machine, so this catches every
   // payment made anywhere in the app (PayButton, Pollar's send modal, …).
@@ -31,14 +33,14 @@ export function BalanceCard() {
 
       <div className="flex items-center justify-between">
         <span className="text-sm font-medium text-primary-foreground/75">
-          Balance
+          {t("balance.label")}
         </span>
         <button
           onClick={() => void refresh()}
           disabled={isLoading}
           className="text-sm font-semibold text-primary-foreground/75 transition-colors hover:text-primary-foreground disabled:opacity-50"
         >
-          Refresh
+          {t("balance.refresh")}
         </button>
       </div>
 

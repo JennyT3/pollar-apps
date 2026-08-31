@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Modal } from "@/components/ui/Modal";
 import { usePollarAuth } from "@/hooks/usePollarAuth";
 import { middleTruncate } from "@/lib/format";
+import { useLanguage } from "@/lib/i18n";
 
 export function AccountModal({
   open,
@@ -14,6 +15,7 @@ export function AccountModal({
 }) {
   const { user, logout } = usePollarAuth();
   const [copied, setCopied] = useState(false);
+  const { t } = useLanguage();
 
   if (!user) return null;
 
@@ -25,23 +27,23 @@ export function AccountModal({
   }
 
   return (
-    <Modal open={open} onClose={onClose} title="Account">
+    <Modal open={open} onClose={onClose} title={t("account.title")}>
       <div className="flex flex-col gap-4">
         <div className="flex flex-col divide-y divide-border rounded-xl border border-border bg-surface">
           <div className="flex items-center justify-between gap-4 px-4 py-3.5">
-            <span className="text-sm text-muted">Email</span>
+            <span className="text-sm text-muted">{t("account.email")}</span>
             <span className="min-w-0 truncate text-sm font-medium">
               {user.profile?.mail ?? "—"}
             </span>
           </div>
           <div className="flex items-center justify-between gap-4 px-4 py-3.5">
-            <span className="text-sm text-muted">Wallet</span>
+            <span className="text-sm text-muted">{t("account.wallet")}</span>
             <button
               onClick={() => void copyAddress()}
               title={user.address}
               className="font-mono text-sm font-medium text-primary transition-colors hover:text-primary-hover"
             >
-              {copied ? "Copied ✓" : middleTruncate(user.address, 6, 6)}
+              {copied ? t("account.copied") : middleTruncate(user.address, 6, 6)}
             </button>
           </div>
         </div>
@@ -53,7 +55,7 @@ export function AccountModal({
           }}
           className="w-full rounded-xl border border-error-border py-2.5 text-sm font-semibold text-error transition-colors hover:bg-error-light"
         >
-          Log out
+          {t("account.logout")}
         </button>
       </div>
     </Modal>
