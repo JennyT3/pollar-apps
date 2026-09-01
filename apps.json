@@ -85,6 +85,13 @@
       "author": null
     },
     {
+      "slug": "bolivia-ghana-corridor",
+      "category": "commerce",
+      "issue": "https://github.com/pollar-xyz/pollar-apps/issues/17",
+      "deploy": "https://ghana-bolivia.vercel.app",
+      "author": "PatrickKish1"
+    },
+    {
       "slug": "adapters/nirium",
       "category": "commerce",
       "issue": "https://github.com/pollar-xyz/pollar-apps/issues/19",
