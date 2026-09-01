@@ -78,7 +78,9 @@ Las contribuciones a metas compartidas no necesitan este mecanismo aparte: el pa
 
 ## Testing con usuarios reales en Bolivia
 
-Plan: crear una meta compartida (ej. "fondo de diciembre") con 3+ cuentas de prueba de una familia boliviana, cada quien escaneando el QR de contribución desde su propio celular como pagarían en la tienda o el mercado — sin explicación técnica de por medio, solo cámara → confirmar. El video adjunto al PR muestra esa sesión, más una meta personal llenándose y el aviso de coverage disparando cuando el balance real baja del total apartado.
+Plan: crear una meta compartida (ej. "fondo de diciembre") con 3+ cuentas de prueba de una familia boliviana, cada quien escaneando el QR de contribución desde su propio celular como pagarían en la tienda o el mercado — sin explicación técnica de por medio, solo cámara → confirmar. El video (link abajo) muestra esa sesión: una meta compartida ("Family Vacation") recibiendo aportes reales de 3 cuentas por QR, más una meta personal llenándose y el aviso de coverage disparando cuando el balance real baja del total apartado.
+
+**Video**: https://drive.google.com/file/d/19759w5bYxHug67RWdDI1C4yTQ0v3R3Bb/view?usp=sharing
 
 ## Estructura
 

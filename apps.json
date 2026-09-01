@@ -67,7 +67,7 @@
       "slug": "alcancia-goals",
       "category": "savings",
       "issue": "https://github.com/pollar-xyz/pollar-apps/issues/8",
-      "deploy": null,
+      "deploy": "https://alcancia-goals.vercel.app",
       "author": "Dante1128"
     },
     {
