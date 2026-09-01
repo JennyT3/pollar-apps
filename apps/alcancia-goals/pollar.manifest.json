@@ -1,0 +1,8 @@
+{
+  "name": "Alcancía",
+  "slug": "alcancia-goals",
+  "description": "Metas de ahorro personales y familiares con progreso en vivo y aportes por QR en USDC.",
+  "category": "savings",
+  "icon": "/icon.svg",
+  "url": "https://alcancia-goals.vercel.app"
+}

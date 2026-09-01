@@ -66,9 +66,9 @@
     {
       "slug": "alcancia-goals",
       "category": "savings",
-      "issue": null,
-      "deploy": null,
-      "author": null
+      "issue": "https://github.com/pollar-xyz/pollar-apps/issues/8",
+      "deploy": "https://alcancia-goals.vercel.app",
+      "author": "Dante1128"
     },
     {
       "slug": "fiado-ledger",
