@@ -65,6 +65,8 @@ Escribir a mano una dirección `G…` nunca es el flujo principal — ambos caso
 
 Nada de esto necesitó nada por fuera de lo que ya trae el template — el "prefill" es simplemente parsear los query params del link en la pantalla de pago.
 
+**Hash capturado** (contribución real entre dos cuentas en testnet, vía QR): [`dcbf731269c939d08a20082b10862c239ed9898733234a53e2791dc400ad50a1`](https://stellar.expert/explorer/testnet/tx/dcbf731269c939d08a20082b10862c239ed9898733234a53e2791dc400ad50a1) — 2,000 USDC (issuer testnet), `Successful`.
+
 ## Autenticación de escrituras
 
 Cambiar el estado de una meta, apartar/retirar en modo personal y unirse a una meta compartida exigen una firma [SEP-53](https://github.com/stellar/stellar-protocol/blob/master/ecosystem/sep-0053.md) del address involucrado (`client.stellar.sep53.signMessage(...)` del SDK), no solo declarar el address en el body — que es público (aparece en el QR y en el historial) y no prueba nada por sí solo. El cliente firma un mensaje que ata acción + meta + address + una expiración de 5 minutos (`lib/sep53.ts`), lo manda en el header `x-alcancia-auth`, y el servidor verifica esa firma contra el address antes de aplicar el cambio (`lib/auth.ts`). Mismo patrón que usan `bill-split` y `money-pool`.
