@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { usePollar } from "@pollar/react";
 import { Modal } from "@/components/ui/Modal";
 import { usePollarAuth } from "@/hooks/usePollarAuth";
 import { middleTruncate } from "@/lib/format";
@@ -13,6 +14,7 @@ export function AccountModal({
   onClose: () => void;
 }) {
   const { user, logout } = usePollarAuth();
+  const { openDistributionRulesModal, openEnabledAssetsModal } = usePollar();
   const [copied, setCopied] = useState(false);
 
   if (!user) return null;
@@ -44,6 +46,21 @@ export function AccountModal({
               {copied ? "Copied ✓" : middleTruncate(user.address, 6, 6)}
             </button>
           </div>
+        </div>
+
+        <div className="flex gap-2">
+          <button
+            onClick={openEnabledAssetsModal}
+            className="flex-1 rounded-xl border border-border py-2.5 text-sm font-semibold transition-colors hover:bg-surface"
+          >
+            Trustlines
+          </button>
+          <button
+            onClick={openDistributionRulesModal}
+            className="flex-1 rounded-xl border border-border py-2.5 text-sm font-semibold transition-colors hover:bg-surface"
+          >
+            Fondos de testnet
+          </button>
         </div>
 
         <button

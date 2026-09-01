@@ -41,7 +41,7 @@ Si el balance real es menor, `components/CoverageBanner.tsx` avisa "tu alcancía
 
 Varios miembros aportan a una meta con **pagos reales en USDC sobre Stellar testnet**, que llegan directo al balance del keeper (quien creó la meta). Cada aporte pasa por el flujo de pago del template (`PayButton` vía `runTx('payment', …)`, ver [`components/ContributeFlow.tsx`](components/ContributeFlow.tsx)) — nunca se reimplementa ni se firma nada por fuera del SDK.
 
-Al confirmarse el pago, la app guarda el hash devuelto y lo verifica contra Horizon testnet (`lib/horizon.ts`) para marcarlo como verificado en el historial; si Horizon no responde, el aporte se guarda igual (el SDK ya lo confirmó) pero queda sin la marca de verificado hasta un reintento.
+Al confirmarse el pago, la app manda el hash a `POST /api/goals/[id]/contributions`, que lo verifica contra Horizon testnet (`lib/horizon.ts`) antes de grabar nada: destino = keeper de la meta, asset = USDC con el issuer de testnet, transacción exitosa, monto suficiente, y memo de texto igual al id de la meta (el `PayButton` lo manda así, ver `ContributeFlow.tsx`, para que un hash real no pueda reusarse contra otra meta). El `contributor_address` que se guarda sale de la operación on-chain (`from`), nunca del body del request. Si cualquiera de esos chequeos falla — incluida una caída de Horizon — el aporte se **rechaza**, no se graba sin verificar.
 
 **Simplificación de diseño**: el keeper de una meta compartida es siempre quien la creó — no se puede asignar a otra cuenta. Esto evita el problema de "asignar custodio sin su consentimiento" y mantiene el modelo de confianza simple: quien crea la meta es quien la guarda.
 
@@ -65,10 +65,16 @@ Escribir a mano una dirección `G…` nunca es el flujo principal — ambos caso
 
 Nada de esto necesitó nada por fuera de lo que ya trae el template — el "prefill" es simplemente parsear los query params del link en la pantalla de pago.
 
+## Autenticación de escrituras
+
+Cambiar el estado de una meta, apartar/retirar en modo personal y unirse a una meta compartida exigen una firma [SEP-53](https://github.com/stellar/stellar-protocol/blob/master/ecosystem/sep-0053.md) del address involucrado (`client.stellar.sep53.signMessage(...)` del SDK), no solo declarar el address en el body — que es público (aparece en el QR y en el historial) y no prueba nada por sí solo. El cliente firma un mensaje que ata acción + meta + address + una expiración de 5 minutos (`lib/sep53.ts`), lo manda en el header `x-alcancia-auth`, y el servidor verifica esa firma contra el address antes de aplicar el cambio (`lib/auth.ts`). Mismo patrón que usan `bill-split` y `money-pool`.
+
+Las contribuciones a metas compartidas no necesitan este mecanismo aparte: el pago on-chain ya es la prueba (ver arriba).
+
 ## Qué falta para producción real
 
-- **No hay verificación de sesión server-side en las API routes**: confían en la dirección que manda el cliente autenticado (no hay `POLLAR_SECRET_KEY` de por medio). Suficiente para el alcance de este bounty — la app nunca custodia fondos — pero no es un modelo de confianza apto para manejar dinero de verdad sin agregar verificación de sesión en el backend.
 - El deploy productivo necesita una base de datos libsql hosteada (ver arriba); sin eso, las metas compartidas no son visibles entre miembros en Vercel.
+- Crear una meta (`POST /api/goals`) todavía confía en el `ownerAddress` del body sin firma — no permite mover ni reclamar fondos de otra cuenta (solo el dueño real puede después apartar/retirar/cambiar el estado, que sí están firmados), así que quedó fuera del alcance de este fix.
 
 ## Testing con usuarios reales en Bolivia
 

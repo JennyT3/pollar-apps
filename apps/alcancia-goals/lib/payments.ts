@@ -1,5 +1,8 @@
 import type { SubmitOutcome, WalletBalanceRecord } from "@pollar/core";
 
+/** USDC issuer on Stellar testnet — the only asset/issuer a contribution can verify against. */
+export const USDC_ISSUER_TESTNET = "GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5";
+
 /** Asset for `runTx('payment', …)`. */
 export type PaymentAsset =
   | { type: "native" }
@@ -25,6 +28,25 @@ export function paymentAssetFrom(
     return { type: record.type, code: record.code, issuer: record.issuer };
   }
   return { type: "native" };
+}
+
+/**
+ * The USDC-testnet balance record, or null if the account doesn't hold any.
+ * Contributions must pay in USDC — never whatever the wallet's primary asset
+ * happens to be — since the server only verifies USDC-testnet payments.
+ */
+export function usdcAssetFrom(
+  record: WalletBalanceRecord | null
+): PaymentAsset | null {
+  if (
+    record &&
+    (record.type === "credit_alphanum4" || record.type === "credit_alphanum12") &&
+    record.code === "USDC" &&
+    record.issuer === USDC_ISSUER_TESTNET
+  ) {
+    return { type: record.type, code: record.code, issuer: record.issuer };
+  }
+  return null;
 }
 
 export function currencyOf(asset: PaymentAsset): string {

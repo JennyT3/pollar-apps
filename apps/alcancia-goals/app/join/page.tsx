@@ -2,6 +2,7 @@
 
 import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { usePollar } from "@pollar/react";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Button } from "@/components/ui/Button";
 import { LoginButton } from "@/components/LoginButton";
@@ -14,6 +15,7 @@ function JoinContent() {
   const params = useSearchParams();
   const router = useRouter();
   const { user } = usePollarAuth();
+  const { getClient } = usePollar();
   const goalId = params.get("goal");
   const [detail, setDetail] = useState<GoalDetail | null>(null);
   const [joining, setJoining] = useState(false);
@@ -46,7 +48,7 @@ function JoinContent() {
     if (!user) return;
     setJoining(true);
     try {
-      await joinGoal(goal.id, user.address);
+      await joinGoal(goal.id, user.address, getClient());
       router.push(`/goals/${goal.id}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "No pudimos unirte, probá de nuevo.");

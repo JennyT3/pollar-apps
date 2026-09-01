@@ -10,7 +10,8 @@ import {
   type GoalStatus,
 } from "@/lib/goals";
 import { progressRatio } from "@/lib/decimal";
-import { looksLikeAddress } from "@/lib/payments";
+import { verifySignedRequest } from "@/lib/auth";
+import { statusMessage } from "@/lib/sep53";
 
 export async function GET(
   _req: NextRequest,
@@ -50,13 +51,17 @@ export async function PATCH(
   const goal = await getGoal(id);
   if (!goal) return NextResponse.json({ error: "Goal not found" }, { status: 404 });
 
-  const { status, address } = (await req.json()) ?? {};
-  if (typeof address !== "string" || !looksLikeAddress(address) || address !== goal.ownerAddress) {
-    return NextResponse.json({ error: "Only the goal owner can change its status" }, { status: 403 });
-  }
+  const { status } = (await req.json()) ?? {};
   if (typeof status !== "string" || !VALID_STATUSES.includes(status as GoalStatus)) {
     return NextResponse.json({ error: "status must be active, completed or archived" }, { status: 400 });
   }
+
+  const auth = await verifySignedRequest(req, (address, exp) => statusMessage(address, id, status, exp));
+  if (!auth.ok) return auth.response;
+  if (auth.address !== goal.ownerAddress) {
+    return NextResponse.json({ error: "Only the goal owner can change its status" }, { status: 403 });
+  }
+
   await setGoalStatus(id, status as GoalStatus);
   return NextResponse.json({ goal: { ...goal, status } });
 }

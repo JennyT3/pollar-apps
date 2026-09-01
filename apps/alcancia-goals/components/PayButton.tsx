@@ -13,12 +13,26 @@ import {
 
 export type { PaymentAsset, PaymentResult };
 
+/**
+ * The SDK types `result.message`/`.details` as `string`, but a server-side
+ * validation failure (e.g. a Zod issue) can put a plain object there instead
+ * — rendering that directly as JSX crashes the whole page (React error #31).
+ * Guard against any non-string shape, not just this one case.
+ */
+function errorMessageFrom(value: unknown): string {
+  return typeof value === "string" && value
+    ? value
+    : "The payment didn't go through. Check the address and your balance, then try again.";
+}
+
 interface PayButtonProps {
   /** Decimal string, e.g. "10.50". */
   amount: string;
   /** Recipient's Stellar address (G…), the id Pollar uses for accounts. */
   recipient: string;
   asset?: PaymentAsset;
+  /** Text memo attached to the payment — e.g. binding it to a goal so the server can verify it wasn't recorded against a different one. */
+  memo?: string;
   label?: string;
   /** Fires on confirmed ('success') and network-accepted ('pending') payments. */
   onSuccess?: (result: PaymentResult) => void;
@@ -43,6 +57,7 @@ export function PayButton({
   amount,
   recipient,
   asset,
+  memo,
   label,
   onSuccess,
 }: PayButtonProps) {
@@ -57,18 +72,15 @@ export function PayButton({
   async function pay() {
     setState({ step: "processing" });
     try {
-      const result = await runTx("payment", {
-        destination: recipient,
-        amount,
-        asset: payAsset,
-      });
+      const result = await runTx(
+        "payment",
+        { destination: recipient, amount, asset: payAsset },
+        memo ? { memo: { type: "text", value: memo } } : undefined
+      );
       if (result.status === "error") {
         setState({
           step: "error",
-          message:
-            result.message ??
-            result.details ??
-            "The payment didn't go through. Check the address and your balance, then try again.",
+          message: errorMessageFrom(result.message ?? result.details),
         });
         return;
       }

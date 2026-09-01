@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { looksLikeAddress } from "@/lib/payments";
 import { getGoal, addSetAside, totalSetAsideForGoal } from "@/lib/goals";
 import { compareAmounts, isPositiveAmount, subtractAmounts } from "@/lib/decimal";
+import { verifySignedRequest } from "@/lib/auth";
+import { setAsideMessage } from "@/lib/sep53";
 
 /**
  * Personal-mode only: records a set-aside (add) or take-back (withdraw)
@@ -20,15 +21,18 @@ export async function POST(
     return NextResponse.json({ error: "Set-aside only applies to personal goals" }, { status: 400 });
   }
 
-  const { address, amount, type } = (await req.json()) ?? {};
-  if (typeof address !== "string" || !looksLikeAddress(address) || address !== goal.ownerAddress) {
-    return NextResponse.json({ error: "Only the goal owner can set aside or take back" }, { status: 403 });
-  }
+  const { amount, type } = (await req.json()) ?? {};
   if (typeof amount !== "string" || !isPositiveAmount(amount)) {
     return NextResponse.json({ error: "amount must be a positive decimal string" }, { status: 400 });
   }
   if (type !== "add" && type !== "withdraw") {
     return NextResponse.json({ error: "type must be 'add' or 'withdraw'" }, { status: 400 });
+  }
+
+  const auth = await verifySignedRequest(req, (address, exp) => setAsideMessage(address, id, type, amount, exp));
+  if (!auth.ok) return auth.response;
+  if (auth.address !== goal.ownerAddress) {
+    return NextResponse.json({ error: "Only the goal owner can set aside or take back" }, { status: 403 });
   }
 
   if (type === "withdraw") {
@@ -42,7 +46,7 @@ export async function POST(
   }
 
   const signedAmount = type === "add" ? amount : subtractAmounts("0", amount);
-  const setAside = await addSetAside(id, address, signedAmount);
+  const setAside = await addSetAside(id, auth.address, signedAmount);
   const saved = await totalSetAsideForGoal(id);
   return NextResponse.json({ setAside, saved }, { status: 201 });
 }

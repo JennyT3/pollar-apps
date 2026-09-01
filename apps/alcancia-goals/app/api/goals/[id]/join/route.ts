@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { looksLikeAddress } from "@/lib/payments";
 import { getGoal, addMember } from "@/lib/goals";
+import { verifySignedRequest } from "@/lib/auth";
+import { joinMessage } from "@/lib/sep53";
 
 export async function POST(
   req: NextRequest,
@@ -13,11 +14,9 @@ export async function POST(
     return NextResponse.json({ error: "Only shared goals can be joined" }, { status: 400 });
   }
 
-  const { address } = (await req.json()) ?? {};
-  if (typeof address !== "string" || !looksLikeAddress(address)) {
-    return NextResponse.json({ error: "address is invalid" }, { status: 400 });
-  }
+  const auth = await verifySignedRequest(req, (address, exp) => joinMessage(address, id, exp));
+  if (!auth.ok) return auth.response;
 
-  await addMember(id, address);
+  await addMember(id, auth.address);
   return NextResponse.json({ ok: true });
 }

@@ -53,6 +53,16 @@ export interface HistoryEntry {
   createdAt: string;
 }
 
+/**
+ * Shared-goal contributions bind the payment to a goal via a Stellar
+ * MEMO_TEXT, which is capped at 28 bytes — too short for a full UUID (36
+ * chars). Goal ids are the only ones that travel as a memo, so only they
+ * need this shorter form; contributions/set-asides keep `crypto.randomUUID()`.
+ */
+function shortId(): string {
+  return crypto.randomUUID().replace(/-/g, "").slice(0, 24);
+}
+
 function toGoal(row: Record<string, unknown>): Goal {
   return {
     id: row.id as string,
@@ -79,7 +89,7 @@ export async function createGoal(input: {
   ownerAddress: string;
 }): Promise<Goal> {
   const client = await db();
-  const id = crypto.randomUUID();
+  const id = shortId();
   const keeperAddress = input.mode === "shared" ? input.ownerAddress : null;
   await client.execute({
     sql: `INSERT INTO goals (id, name, emoji, target_amount, deadline, mode, currency, owner_address, keeper_address)

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { usePollar } from "@pollar/react";
 import { Button } from "@/components/ui/Button";
 import { Modal } from "@/components/ui/Modal";
 import { setAside } from "@/lib/api";
@@ -22,6 +23,7 @@ export function SetAsideModal({
   type: "add" | "withdraw";
   onDone: (saved: string) => void;
 }) {
+  const { getClient } = usePollar();
   const [amount, setAmount] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -33,7 +35,7 @@ export function SetAsideModal({
     setSubmitting(true);
     setError(null);
     try {
-      const res = await setAside(goalId, address, amount, type);
+      const res = await setAside(goalId, address, amount, type, getClient());
       onDone(res.saved);
       setAmount("");
       onClose();

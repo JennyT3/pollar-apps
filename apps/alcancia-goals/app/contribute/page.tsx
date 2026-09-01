@@ -9,6 +9,7 @@ import { Spinner } from "@/components/ui/Spinner";
 import { usePollarAuth } from "@/hooks/usePollarAuth";
 import { formatAmount } from "@/lib/format";
 import { getGoalDetail, type GoalDetail } from "@/lib/api";
+import { compareAmounts, subtractAmounts } from "@/lib/decimal";
 
 function ContributeContent() {
   const params = useSearchParams();
@@ -68,8 +69,8 @@ function ContributeContent() {
         <ContributeFlow
           goalId={goal.id}
           keeperAddress={goal.keeperAddress}
-          contributorAddress={user.address}
           currency={goal.currency}
+          remaining={compareAmounts(goal.saved, goal.targetAmount) >= 0 ? "0" : subtractAmounts(goal.targetAmount, goal.saved)}
           onContributed={() => router.push(`/goals/${goal.id}`)}
         />
       )}

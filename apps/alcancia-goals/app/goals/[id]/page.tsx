@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
+import { usePollar } from "@pollar/react";
 import { ContributeFlow } from "@/components/ContributeFlow";
 import { CoverageBanner } from "@/components/CoverageBanner";
 import { GoalQR } from "@/components/GoalQR";
@@ -16,6 +17,7 @@ import { Spinner } from "@/components/ui/Spinner";
 import { usePollarAuth } from "@/hooks/usePollarAuth";
 import { formatAmount, shortAddress } from "@/lib/format";
 import { getGoalDetail, setGoalStatus, type GoalDetail } from "@/lib/api";
+import { compareAmounts, subtractAmounts } from "@/lib/decimal";
 
 function daysLeft(deadline: string): number {
   return Math.ceil((new Date(deadline).getTime() - Date.now()) / 86_400_000);
@@ -24,6 +26,7 @@ function daysLeft(deadline: string): number {
 export default function GoalDetailPage() {
   const { id } = useParams<{ id: string }>();
   const { user } = usePollarAuth();
+  const { getClient } = usePollar();
   const [detail, setDetail] = useState<GoalDetail | null>(null);
   const [notFound, setNotFound] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
@@ -72,12 +75,12 @@ export default function GoalDetailPage() {
   const contributeUrl = `${origin}/contribute?goal=${goal.id}`;
 
   async function complete() {
-    await setGoalStatus(goal.id, "completed", userAddress);
+    await setGoalStatus(goal.id, "completed", userAddress, getClient());
     void reload();
   }
 
   async function archive() {
-    await setGoalStatus(goal.id, "archived", userAddress);
+    await setGoalStatus(goal.id, "archived", userAddress, getClient());
     void reload();
   }
 
@@ -215,8 +218,8 @@ export default function GoalDetailPage() {
           <ContributeFlow
             goalId={goal.id}
             keeperAddress={goal.keeperAddress}
-            contributorAddress={user.address}
             currency={goal.currency}
+            remaining={compareAmounts(goal.saved, goal.targetAmount) >= 0 ? "0" : subtractAmounts(goal.targetAmount, goal.saved)}
             onContributed={() => void reload()}
           />
         )}
