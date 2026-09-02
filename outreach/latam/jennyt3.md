@@ -38,7 +38,7 @@
 - **Call date:** 2026-08-27
 - **Outcome:** Completed. Productive fit for the campaign — exactly the builder profile issue #22 exists for. Follow-up to define integration scope.
 - **Referred by:** @JennyT3
-- **Booking attributed to:** @JennyT3
+- **Booking attributed to:** — (no Referred by field recorded in the booking; see `CONTEXT.md`)
 
 ---
 
@@ -54,11 +54,17 @@
 - **Call date:** 2026-08-31
 - **Outcome:** Completed. Productive on both ChatterPay and his own project; booking carries explicit attribution ("Jenny T me dio tu contacto").
 - **Referred by:** @JennyT3
-- **Booking attributed to:** @JennyT3
+- **Booking attributed to:** @JennyT3 (verified in the booking itself)
 
 ---
 
-### 3. Simon Espinola
+## Booked but Not Completed
+
+| Project | Country | Booked Date | Reason / Status |
+|---------|---------|-------------|-----------------|
+| Dobprotocol (Simon Espinola) | Chile | 2026-09-01 | Call booked for 2026-09-01; not yet completed at report time. |
+
+### Simon Espinola
 - **Project:** Dobprotocol
 - **Country / city:** Chile
 - **Links:** https://dobprotocol.com · https://x.com/dobprotocol
@@ -70,15 +76,7 @@
 - **Call date:** 2026-09-01
 - **Outcome:** Call on the calendar for 2026-09-01. Outcome to be recorded after the call.
 - **Referred by:** @JennyT3
-- **Booking attributed to:** @JennyT3
-
----
-
-## Booked but Not Completed
-
-| Project | Country | Booked Date | Reason / Status |
-|---------|---------|-------------|-----------------|
-| Dobprotocol (Simon Espinola) | Chile | 2026-09-01 | Call booked for 2026-09-01; not yet completed at report time. |
+- **Booking attributed to:** — (no Referred by field recorded in the booking; see `CONTEXT.md`)
 
 ---
 
@@ -94,7 +92,7 @@
 
 - **Targeted warm outreach** reached exactly the builder and live-product profiles issue #22 targets.
 - **Productive calls:** the call with Andrés was productive on both ChatterPay and his own project Lore; Julio is exactly the profile this campaign exists for.
-- **Attribution:** each booking carried the contributor's handle in the referral field so tracking is clean and verifiable.
+- **Attribution:** Andrés' booking carried the contributor's handle explicitly; every future booking will carry it in the Referred by field so tracking is clean and verifiable.
 - **Verified links only:** all project links in this report resolve; non-resolving links from the original submission were dropped.
 
 ## What Did Not Work
@@ -111,4 +109,4 @@
 
 ---
 
-*Report compiled by JennyT3. All calls attributed to @JennyT3 via booking referral fields. Briefs delivered in Telegram at least 24h before each call. Contact details omitted from this public report per the issue's privacy rule.*
+*Report compiled by JennyT3. Attribution verified on Andrés' booking; not recorded on the other two (see `CONTEXT.md`). Briefs delivered in Telegram at least 24h before each call. Contact details omitted from this public report per the issue's privacy rule.*
